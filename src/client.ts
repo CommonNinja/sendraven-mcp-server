@@ -23,7 +23,7 @@ function apiKey(): string {
 }
 
 export async function request<T>(
-  method: "GET" | "POST" | "DELETE",
+  method: "GET" | "POST" | "PATCH" | "DELETE",
   path: string,
   body?: unknown,
 ): Promise<T> {

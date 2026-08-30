@@ -23,6 +23,23 @@ import { getThreadTool, listThreadsTool, replyToMessageTool } from "./tools/thre
 import { listTemplatesTool, renderTemplateTool, sendTemplateTool } from "./tools/templates";
 import { decideApprovalTool, listApprovalsTool } from "./tools/approvals";
 import { emitEventTool, enrollTool, listAutomationsTool } from "./tools/automations";
+import { getPreferencesTool, listTopicsTool, setPreferencesTool } from "./tools/topics";
+import {
+  addContactTool,
+  countSegmentTool,
+  getContactTool,
+  listAudiencesTool,
+  listSegmentsTool,
+  updateContactTool,
+} from "./tools/audiences";
+import {
+  batchSuppressTool,
+  broadcastRecipientsTool,
+  listApiKeysTool,
+  listScheduledTool,
+  listWebhookEventsTool,
+  metricsTool,
+} from "./tools/operations";
 
 /**
  * The MCP SDK bundles its own copy of zod, so a schema built against our
@@ -62,6 +79,21 @@ const TOOLS: ToolDef[] = [
   listAutomationsTool,
   enrollTool,
   emitEventTool,
+  listTopicsTool,
+  getPreferencesTool,
+  setPreferencesTool,
+  listAudiencesTool,
+  addContactTool,
+  getContactTool,
+  updateContactTool,
+  listSegmentsTool,
+  countSegmentTool,
+  metricsTool,
+  listScheduledTool,
+  batchSuppressTool,
+  listWebhookEventsTool,
+  broadcastRecipientsTool,
+  listApiKeysTool,
 ];
 
 const server = new McpServer({ name: "cn-emails", version: "0.1.0" });
