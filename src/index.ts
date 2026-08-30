@@ -22,6 +22,7 @@ import {
 import { getThreadTool, listThreadsTool, replyToMessageTool } from "./tools/threads";
 import { listTemplatesTool, renderTemplateTool, sendTemplateTool } from "./tools/templates";
 import { decideApprovalTool, listApprovalsTool } from "./tools/approvals";
+import { emitEventTool, enrollTool, listAutomationsTool } from "./tools/automations";
 
 /**
  * The MCP SDK bundles its own copy of zod, so a schema built against our
@@ -58,6 +59,9 @@ const TOOLS: ToolDef[] = [
   sendTemplateTool,
   listApprovalsTool,
   decideApprovalTool,
+  listAutomationsTool,
+  enrollTool,
+  emitEventTool,
 ];
 
 const server = new McpServer({ name: "cn-emails", version: "0.1.0" });
