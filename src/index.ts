@@ -147,6 +147,25 @@ async function runStdio(): Promise<void> {
 
 const MCP_SERVER_URL = process.env.MCP_SERVER_URL || "https://mcp.sendraven.ai";
 const APP_URL = process.env.APP_URL || "https://sendraven.ai";
+const PUBLIC_API_URL =
+  process.env.SENDRAVEN_API_URL || process.env.PUBLIC_API_URL || "https://api.sendraven.ai";
+
+/** Kept in step with api-server/src/oauth/scopes.ts. */
+const OAUTH_SCOPES = [
+  "emails:send",
+  "emails:read",
+  "domains:read",
+  "domains:write",
+  "contacts:read",
+  "contacts:write",
+  "broadcasts:read",
+  "broadcasts:write",
+  "webhooks:read",
+  "webhooks:write",
+  "threads:read",
+  "templates:read",
+  "templates:write",
+];
 
 /**
  * Does this request need a key?
@@ -182,21 +201,56 @@ function runHttp(): void {
   const app = express();
   app.use(express.json({ limit: "5mb" }));
 
+  // RFC 9728. After a 401 an MCP client reads this to find out where to send
+  // the user to authorize.
+  app.get("/.well-known/oauth-protected-resource", (_req: Request, res: Response) => {
+    res.json({
+      resource: MCP_SERVER_URL,
+      authorization_servers: [PUBLIC_API_URL],
+      scopes_supported: OAUTH_SCOPES,
+      bearer_methods_supported: ["header"],
+      resource_name: "SendRaven",
+      resource_documentation: `${APP_URL}/docs`,
+    });
+  });
+
+  // RFC 8414. Some clients probe the resource host for this before following
+  // authorization_servers, so it is answered here as well as on the API.
+  app.get("/.well-known/oauth-authorization-server", (_req: Request, res: Response) => {
+    res.json({
+      issuer: PUBLIC_API_URL,
+      authorization_endpoint: `${APP_URL}/oauth/authorize`,
+      token_endpoint: `${PUBLIC_API_URL}/oauth/token`,
+      registration_endpoint: `${PUBLIC_API_URL}/oauth/register`,
+      revocation_endpoint: `${PUBLIC_API_URL}/oauth/revoke`,
+      token_endpoint_auth_methods_supported: ["none", "client_secret_post"],
+      scopes_supported: OAUTH_SCOPES,
+      response_types_supported: ["code"],
+      grant_types_supported: ["authorization_code", "refresh_token"],
+      // S256 only. "plain" offers no protection against an intercepted code,
+      // which is the entire reason PKCE exists.
+      code_challenge_methods_supported: ["S256"],
+    });
+  });
+
   app.post("/mcp", async (req: Request, res: Response) => {
     const auth = req.headers.authorization || "";
     const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
 
     if (!token && requiresAuth(req.body)) {
-      // WWW-Authenticate tells a client how to fix this rather than just that
-      // it failed. We have no OAuth server, so it points at the page where a
-      // key is created — emitting OAuth discovery metadata for endpoints that
-      // do not exist would send clients chasing 404s.
+      // Pointing at the protected-resource document is what starts the OAuth
+      // flow in an MCP client: it reads this header, fetches the metadata, and
+      // sends the user to the consent screen. A plain API key also works for
+      // anyone who would rather paste one.
       res
         .status(401)
-        .set("WWW-Authenticate", `Bearer realm="SendRaven", error="invalid_token"`)
+        .set(
+          "WWW-Authenticate",
+          `Bearer resource_metadata="${MCP_SERVER_URL}/.well-known/oauth-protected-resource"`,
+        )
         .json({
           error: "Unauthorized",
-          message: `Send an API key as 'Authorization: Bearer sk_live_...'. Create one at ${APP_URL}/developers.`,
+          message: `Authorize this client, or send an API key as 'Authorization: Bearer sk_live_...' from ${APP_URL}/developers.`,
         });
       return;
     }
