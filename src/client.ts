@@ -3,7 +3,10 @@
  * second implementation — every tool here goes through the same endpoints,
  * auth and rate limits a customer's own integration would.
  */
-const BASE_URL = process.env.EMAILS_API_URL || "https://api.sendraven.ai";
+import { currentApiKey } from "./context";
+
+const BASE_URL =
+  process.env.SENDRAVEN_API_URL || process.env.EMAILS_API_URL || "https://api.sendraven.ai";
 
 export class ApiError extends Error {
   constructor(
@@ -15,9 +18,12 @@ export class ApiError extends Error {
 }
 
 function apiKey(): string {
-  const key = process.env.EMAILS_API_KEY;
+  const key = currentApiKey();
   if (!key) {
-    throw new Error("EMAILS_API_KEY is not set. Create one at /developers in the dashboard.");
+    throw new Error(
+      "No API key. Over HTTP, send it as 'Authorization: Bearer sk_live_...'; " +
+        "over stdio, set SENDRAVEN_API_KEY. Create one at /developers in the dashboard.",
+    );
   }
   return key;
 }
