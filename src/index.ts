@@ -96,7 +96,7 @@ const TOOLS: ToolDef[] = [
   listApiKeysTool,
 ];
 
-const server = new McpServer({ name: "cn-emails", version: "0.1.0" });
+const server = new McpServer({ name: "sendraven", version: "0.1.0" });
 
 for (const tool of TOOLS) {
   server.tool(
@@ -124,6 +124,6 @@ async function main() {
 }
 
 main().catch((e) => {
-  console.error("cn-emails MCP server failed to start:", e);
+  console.error("SendRaven MCP server failed to start:", e);
   process.exit(1);
 });

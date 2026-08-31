@@ -1,9 +1,9 @@
 {
-  "name": "cn-emails-mcp-server",
+  "name": "sendraven-mcp-server",
   "version": "0.1.0",
   "private": true,
   "type": "commonjs",
-  "bin": { "cn-emails-mcp": "dist/index.js" },
+  "bin": { "sendraven-mcp": "dist/index.js" },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",

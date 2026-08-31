@@ -3,7 +3,7 @@
  * second implementation — every tool here goes through the same endpoints,
  * auth and rate limits a customer's own integration would.
  */
-const BASE_URL = process.env.EMAILS_API_URL || "https://api.emails.commoninja.com";
+const BASE_URL = process.env.EMAILS_API_URL || "https://api.sendraven.ai";
 
 export class ApiError extends Error {
   constructor(
