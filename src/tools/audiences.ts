@@ -11,8 +11,9 @@ export const listAudiencesTool = {
 export const addContactTool = {
   name: "add_contact",
   description:
-    "Add or update a contact in an audience. Re-adding the same address updates it rather " +
-    "than duplicating, so this is safe to retry.",
+    "Add someone to an audience. A contact exists once per workspace and can be on any number " +
+    "of audiences, so adding an address that already exists joins them to this list rather than " +
+    "creating a second copy. Safe to retry.",
   schema: {
     audience_id: z.string(),
     email: z.string().email(),
@@ -27,7 +28,9 @@ export const addContactTool = {
 
 export const getContactTool = {
   name: "get_contact",
-  description: "Fetch one contact by id, with their custom properties and engagement dates.",
+  description:
+    "Fetch one contact by id, with their audience memberships, custom properties and " +
+    "engagement dates.",
   schema: { id: z.string() },
   handler: async (args: Record<string, unknown>) => request("GET", `/v1/contacts/${args.id}`),
 };
@@ -88,4 +91,30 @@ export const findContactTool = {
     if (args.unsubscribed !== undefined) q.set("unsubscribed", String(args.unsubscribed));
     return request("GET", `/v1/contacts?${q.toString()}`);
   },
+};
+
+export const removeFromAudienceTool = {
+  name: "remove_from_audience",
+  description:
+    "Take a contact off one audience. They stay in the workspace and keep every other audience, " +
+    "their suppression and their engagement history. To remove the person entirely use " +
+    "delete_contact — leaving a list and being forgotten are different things.",
+  schema: {
+    audience_id: z.string(),
+    contact_id: z.string(),
+  },
+  handler: async (args: Record<string, unknown>) =>
+    request("DELETE", `/v1/audiences/${args.audience_id}/contacts/${args.contact_id}`),
+};
+
+export const deleteContactTool = {
+  name: "delete_contact",
+  description:
+    "Remove a person from the workspace entirely, along with every audience membership. Their " +
+    "suppression and topic preferences are kept on purpose — an opt-out has to outlive the " +
+    "contact record, or the next import silently puts them back on the list. To take someone " +
+    "off a single audience use remove_from_audience instead.",
+  schema: { contact_id: z.string() },
+  handler: async (args: Record<string, unknown>) =>
+    request("DELETE", `/v1/contacts/${args.contact_id}`),
 };

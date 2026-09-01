@@ -30,10 +30,12 @@ import { getPreferencesTool, listTopicsTool, setPreferencesTool } from "./tools/
 import {
   addContactTool,
   countSegmentTool,
+  deleteContactTool,
+  findContactTool,
   getContactTool,
   listAudiencesTool,
   listSegmentsTool,
-  findContactTool,
+  removeFromAudienceTool,
   updateContactTool,
 } from "./tools/audiences";
 import {
@@ -99,6 +101,8 @@ const TOOLS: ToolDef[] = [
   broadcastRecipientsTool,
   listApiKeysTool,
   findContactTool,
+  removeFromAudienceTool,
+  deleteContactTool,
 ];
 
 /**
