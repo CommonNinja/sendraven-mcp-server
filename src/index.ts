@@ -33,6 +33,7 @@ import {
   getContactTool,
   listAudiencesTool,
   listSegmentsTool,
+  findContactTool,
   updateContactTool,
 } from "./tools/audiences";
 import {
@@ -97,6 +98,7 @@ const TOOLS: ToolDef[] = [
   listWebhookEventsTool,
   broadcastRecipientsTool,
   listApiKeysTool,
+  findContactTool,
 ];
 
 /**

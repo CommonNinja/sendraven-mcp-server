@@ -65,3 +65,27 @@ export const countSegmentTool = {
   schema: { id: z.string() },
   handler: async (args: Record<string, unknown>) => request("GET", `/v1/segments/${args.id}/metrics`),
 };
+
+export const findContactTool = {
+  name: "find_contact",
+  description:
+    "Find a contact by address across every audience, without knowing which list they are on. " +
+    "Use email for an exact match, or q for a prefix. Returns each audience membership " +
+    "separately — the same address on three lists is three rows — and whether each is " +
+    "unsubscribed.",
+  schema: {
+    email: z.string().optional().describe("Exact address"),
+    q: z.string().optional().describe("Address prefix, for a partial match"),
+    unsubscribed: z.boolean().optional().describe("Filter to only opted-in or only opted-out"),
+    limit: z.number().optional(),
+    cursor: z.string().optional().describe("An address, from a previous call's next_cursor"),
+  },
+  handler: async (args: Record<string, unknown>) => {
+    const q = new URLSearchParams();
+    for (const k of ["email", "q", "limit", "cursor"]) {
+      if (args[k] !== undefined) q.set(k, String(args[k]));
+    }
+    if (args.unsubscribed !== undefined) q.set("unsubscribed", String(args.unsubscribed));
+    return request("GET", `/v1/contacts?${q.toString()}`);
+  },
+};
