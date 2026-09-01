@@ -60,3 +60,14 @@ export const listApiKeysTool = {
   schema: {},
   handler: async () => request("GET", "/v1/api-keys"),
 };
+
+export const getUsageTool = {
+  name: "get_usage",
+  description:
+    "This workspace's plan, how many emails it has sent this month, and how many are " +
+    "left. Check before a large batch: a send that would cross the included allowance " +
+    "on a plan without overage is refused whole, so it is better to know first than to " +
+    "discover it halfway through a campaign.",
+  schema: {},
+  handler: async () => request("GET", "/v1/usage"),
+};
