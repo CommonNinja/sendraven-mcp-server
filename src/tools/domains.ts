@@ -13,12 +13,16 @@ export const listDomainsTool = {
 export const addDomainTool = {
   name: "add_sending_domain",
   description:
-    "Register a sending domain and get back the DNS records to publish. Use a subdomain per " +
-    "risk class — mail.example.com for transactional, news.example.com for marketing — so a " +
-    "marketing complaint spike can never affect password reset delivery.",
+    "Register a sending domain and get back the DNS records to publish. Give the domain you " +
+    "send from — mail.<domain> and news.<domain> are provisioned beneath it and the right one " +
+    "is chosen per message, so a marketing complaint spike can never affect password reset " +
+    "delivery. Pass risk_class only to provision one of the two on its own.",
   schema: {
-    domain: z.string().describe("Bare domain, e.g. mail.example.com"),
-    risk_class: z.enum(["transactional", "marketing"]),
+    domain: z.string().describe("The domain you send from, e.g. example.com"),
+    risk_class: z
+      .enum(["transactional", "marketing"])
+      .optional()
+      .describe("Omit to provision both, which is almost always what you want"),
   },
   handler: async (args: Record<string, unknown>) => request("POST", "/v1/domains", args),
 };
