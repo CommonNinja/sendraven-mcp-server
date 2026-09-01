@@ -118,3 +118,31 @@ export const deleteContactTool = {
   handler: async (args: Record<string, unknown>) =>
     request("DELETE", `/v1/contacts/${args.contact_id}`),
 };
+
+export const tagContactTool = {
+  name: "tag_contact",
+  description:
+    "Add or remove tags on a contact. Tags are flat labels — vip, beta, churned — as opposed to " +
+    "custom properties, which are declared fields with a value. They are lower-cased and spaces " +
+    "become hyphens, so VIP and vip are the same tag. Tagging reaches the person across every " +
+    "audience they are on. Call list_tags first to see what the workspace already uses, rather " +
+    "than inventing a synonym for an existing tag.",
+  schema: {
+    contact_id: z.string(),
+    add: z.array(z.string()).optional(),
+    remove: z.array(z.string()).optional(),
+  },
+  handler: async (args: Record<string, unknown>) => {
+    const { contact_id, ...body } = args;
+    return request("POST", `/v1/contacts/${contact_id}/tags`, body);
+  },
+};
+
+export const listTagsTool = {
+  name: "list_tags",
+  description:
+    "Every tag in use in the workspace, with how many contacts carry each. Tags are free-form, " +
+    "so this is the only way to know what exists before applying one.",
+  schema: {},
+  handler: async () => request("GET", "/v1/contacts/tags"),
+};

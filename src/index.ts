@@ -35,7 +35,9 @@ import {
   getContactTool,
   listAudiencesTool,
   listSegmentsTool,
+  listTagsTool,
   removeFromAudienceTool,
+  tagContactTool,
   updateContactTool,
 } from "./tools/audiences";
 import {
@@ -93,6 +95,7 @@ const TOOLS: ToolDef[] = [
   getContactTool,
   updateContactTool,
   listSegmentsTool,
+  listTagsTool,
   countSegmentTool,
   metricsTool,
   listScheduledTool,
@@ -103,6 +106,8 @@ const TOOLS: ToolDef[] = [
   findContactTool,
   removeFromAudienceTool,
   deleteContactTool,
+  tagContactTool,
+  listTagsTool,
 ];
 
 /**
