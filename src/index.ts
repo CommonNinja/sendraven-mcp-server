@@ -107,7 +107,6 @@ const TOOLS: ToolDef[] = [
   removeFromAudienceTool,
   deleteContactTool,
   tagContactTool,
-  listTagsTool,
 ];
 
 /**
