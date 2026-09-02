@@ -189,7 +189,8 @@ function runHttp(): void {
 
 // stdio when asked for explicitly or when there is no PORT to bind, which is
 // what an MCP client launching this as a subprocess looks like.
-const useStdio = process.argv.includes("--stdio") || process.env.MCP_TRANSPORT === "stdio";
+const useStdio =
+  process.argv.includes("--stdio") || process.env.MCP_TRANSPORT === "stdio" || !process.env.PORT;
 
 if (useStdio) {
   runStdio().catch((e) => {

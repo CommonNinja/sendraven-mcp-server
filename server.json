@@ -1,0 +1,34 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "ai.sendraven/mcp",
+  "description": "Email for AI agents: send, read replies as threads, run campaigns, decide approvals, with per-key limits.",
+  "repository": {
+    "url": "https://github.com/sendraven/mcp",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "websiteUrl": "https://sendraven.ai/mcp",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@sendraven/mcp",
+      "version": "0.1.0",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        {
+          "name": "SENDRAVEN_API_KEY",
+          "description": "API key from the SendRaven dashboard (Developers).",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.sendraven.ai/mcp"
+    }
+  ]
+}
