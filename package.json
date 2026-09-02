@@ -7,10 +7,10 @@
   "homepage": "https://sendraven.ai/mcp",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sendraven/mcp.git"
+    "url": "https://github.com/CommonNinja/sendraven-mcp-server.git"
   },
   "bugs": {
-    "url": "https://github.com/sendraven/mcp/issues"
+    "url": "https://github.com/CommonNinja/sendraven-mcp-server/issues"
   },
   "keywords": [
     "mcp",

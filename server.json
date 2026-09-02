@@ -3,7 +3,7 @@
   "name": "ai.sendraven/mcp",
   "description": "Email for AI agents: send, read replies as threads, run campaigns, decide approvals, with per-key limits.",
   "repository": {
-    "url": "https://github.com/sendraven/mcp",
+    "url": "https://github.com/CommonNinja/sendraven-mcp-server",
     "source": "github"
   },
   "version": "0.1.0",
