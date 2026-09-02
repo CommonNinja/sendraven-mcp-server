@@ -8,9 +8,10 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc && tsx scripts/export-tools.ts",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "export-tools": "tsx scripts/export-tools.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
