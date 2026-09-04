@@ -20,8 +20,10 @@ import {
   removeSuppressionTool,
 } from "./suppressions";
 import {
+  getBroadcastTool,
   listBroadcastsTool,
   previewBroadcastTool,
+  resumeBroadcastTool,
   sendBroadcastTool,
 } from "./broadcasts";
 import { getThreadTool, listThreadsTool, replyToMessageTool } from "./threads";
@@ -76,8 +78,10 @@ export const TOOLS: ToolDef[] = [
   listSuppressionsTool,
   addSuppressionTool,
   removeSuppressionTool,
+  getBroadcastTool,
   listBroadcastsTool,
   previewBroadcastTool,
+  resumeBroadcastTool,
   sendBroadcastTool,
   listThreadsTool,
   getThreadTool,

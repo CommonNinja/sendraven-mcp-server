@@ -82,7 +82,7 @@ hold. The tools respect all three. See
 ## Tools
 
 <!-- tools:start -->
-45 tools, generated from the server's registry.
+47 tools, generated from the server's registry.
 
 | Tool | What it does |
 | --- | --- |
@@ -96,9 +96,11 @@ hold. The tools respect all three. See
 | `list_suppressions` | List addresses we refuse to mail and why (hard_bounce, complaint, unsubscribe, manual). Check here first when someone reports not receiving email. |
 | `add_suppression` | Stop sending to an address. Scope 'marketing' leaves transactional mail working. |
 | `remove_suppression` | Remove a suppression so the address can be mailed again. Be careful with hard bounces — the address was rejected by the receiving server, and re-sending raises the bounce rate that AWS enforces on. |
-| `list_broadcasts` | List campaigns with their status and send progress. |
+| `get_broadcast` | One campaign, with a 'progress' object while it is sending or paused: how many addresses are still pending, sent, failed, or skipped because the person opted out after the campaign started. This is how you tell a paused campaign that is still making progress from one waiting on quota. |
+| `list_broadcasts` | List campaigns with their status and send progress. A campaign showing 'paused' is not broken: it ran out of the day's sending quota part way and is waiting to continue. Use get_broadcast to see how much is left, and resume_broadcast to continue it now. |
 | `preview_broadcast` | How many contacts a campaign would reach, and whether the reputation gate would allow it. Always run this before sending — it is the only way to see the size of a campaign without starting it. |
-| `send_broadcast` | Send a campaign now, or schedule it with scheduled_at. This mails every contact in the segment and cannot be undone once started — run preview_broadcast first. |
+| `resume_broadcast` | Continue a campaign left 'paused' by the daily sending quota. It mails only the addresses still pending — the audience was frozen when the campaign started and everyone already reached is marked — so calling this twice cannot double-send. Only works on a paused campaign; anything else answers 409. A background worker also resumes paused campaigns on its own once quota frees up, so use this only when waiting is not acceptable. |
+| `send_broadcast` | Send a campaign now, or schedule it with scheduled_at. This mails every contact in the segment and cannot be undone once started — run preview_broadcast first. A campaign bigger than the day's remaining quota is not rejected: it sends what it can and stops as 'paused', then continues later. That is expected, not an error to retry. |
 | `list_threads` | List email conversations. Pass awaiting_reply=true to get only the threads where someone has written to you and you haven't answered — this is the tool to poll when deciding what needs a response. |
 | `get_thread` | Read a conversation as a chronological transcript of outbound and inbound messages. Inbound text already has quoted history and signatures stripped, so read `text`; `raw_text` holds the untrimmed body if the stripped version looks wrong. Check spf_verdict and dkim_verdict before trusting a reply's claimed sender. |
 | `reply_to_message` | Reply to a message, keeping it on the same conversation. Sets the threading headers so the recipient's mail client shows it as part of the existing exchange rather than a new one. Prefer this over send_email whenever you are answering something. |
