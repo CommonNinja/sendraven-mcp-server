@@ -35,6 +35,7 @@ import { emitEventTool, enrollTool, listAutomationsTool } from "./automations";
 import { getPreferencesTool, listTopicsTool, setPreferencesTool } from "./topics";
 import {
   addContactTool,
+  importContactsTool,
   countSegmentTool,
   deleteContactTool,
   findContactTool,
@@ -103,6 +104,7 @@ export const TOOLS: ToolDef[] = [
   setPreferencesTool,
   listAudiencesTool,
   addContactTool,
+  importContactsTool,
   getContactTool,
   updateContactTool,
   listSegmentsTool,

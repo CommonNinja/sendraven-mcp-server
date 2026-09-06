@@ -8,21 +8,62 @@ export const listAudiencesTool = {
   handler: async () => request("GET", "/v1/audiences"),
 };
 
+const CONTACT_STATUS = z.enum(["subscribed", "unsubscribed", "bounced", "complained"]);
+
+const contactFields = {
+  email: z.string().email(),
+  first_name: z.string().optional(),
+  last_name: z.string().optional(),
+  tags: z.array(z.string()).optional().describe("Flat labels; lower-cased, spaces become hyphens"),
+  attributes: z
+    .record(z.union([z.string(), z.number(), z.boolean()]))
+    .optional()
+    .describe("Custom properties by key. An unknown key creates a string property."),
+  status: CONTACT_STATUS.optional().describe(
+    "Standing with the previous sender. unsubscribed suppresses for marketing; bounced and " +
+      "complained suppress for everything. Defaults to subscribed.",
+  ),
+};
+
 export const addContactTool = {
   name: "add_contact",
   description:
     "Add someone to an audience. A contact exists once per workspace and can be on any number " +
     "of audiences, so adding an address that already exists joins them to this list rather than " +
-    "creating a second copy. Safe to retry.",
+    "creating a second copy. Pass status when the person has opted out elsewhere — it writes the " +
+    "suppression as well as the flag, and an add never resubscribes someone who opted out here. " +
+    "Safe to retry. For more than a handful of people use import_contacts.",
   schema: {
     audience_id: z.string(),
-    email: z.string().email(),
-    first_name: z.string().optional(),
-    last_name: z.string().optional(),
+    ...contactFields,
   },
   handler: async (args: Record<string, unknown>) => {
     const { audience_id, ...body } = args;
     return request("POST", `/v1/audiences/${audience_id}/contacts`, body);
+  },
+};
+
+export const importContactsTool = {
+  name: "import_contacts",
+  description:
+    "Import up to 5,000 contacts into an audience in one call, with names, tags, custom " +
+    "properties and subscription status. This is the migration tool: send the previous " +
+    "provider's unsubscribed, bounced and complained lists with the matching status *before* " +
+    "the first campaign, or the new domain mails people who opted out and loses its reputation " +
+    "in a day. Existing contacts are updated rather than duplicated, and nobody who opted out " +
+    "here is resubscribed, so re-running an import is safe. Returns counts: inserted, updated, " +
+    "skipped, unsubscribed, bounced, complained, suppressed, properties_created.",
+  schema: {
+    audience_id: z.string(),
+    contacts: z.array(z.object(contactFields)).min(1).max(5000),
+    source: z
+      .string()
+      .optional()
+      .describe("Where the list came from, e.g. \"Mailchimp\" — recorded on each suppression"),
+  },
+  handler: async (args: Record<string, unknown>) => {
+    const q = args.source ? `?source=${encodeURIComponent(String(args.source))}` : "";
+    return request("POST", `/v1/audiences/${args.audience_id}/contacts${q}`, args.contacts);
   },
 };
 

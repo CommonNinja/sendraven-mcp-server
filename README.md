@@ -82,7 +82,7 @@ hold. The tools respect all three. See
 ## Tools
 
 <!-- tools:start -->
-49 tools, generated from the server's registry.
+50 tools, generated from the server's registry.
 
 | Tool | What it does |
 | --- | --- |
@@ -118,7 +118,8 @@ hold. The tools respect all three. See
 | `get_email_preferences` | What one person has chosen to receive. Check this before asking a human why someone isn't getting a particular kind of email — an opt-out looks identical to a delivery failure from the outside. |
 | `set_email_preferences` | Set which topics a person receives. Only do this when they have actually asked — silently re-subscribing someone who opted out is what generates spam complaints. |
 | `list_audiences` | List contact lists and how many contacts each holds. |
-| `add_contact` | Add someone to an audience. A contact exists once per workspace and can be on any number of audiences, so adding an address that already exists joins them to this list rather than creating a second copy. Safe to retry. |
+| `add_contact` | Add someone to an audience. A contact exists once per workspace and can be on any number of audiences, so adding an address that already exists joins them to this list rather than creating a second copy. Pass status when the person has opted out elsewhere — it writes the suppression as well as the flag, and an add never resubscribes someone who opted out here. Safe to retry. For more than a handful of people use import_contacts. |
+| `import_contacts` | Import up to 5,000 contacts into an audience in one call, with names, tags, custom properties and subscription status. This is the migration tool: send the previous provider's unsubscribed, bounced and complained lists with the matching status *before* the first campaign, or the new domain mails people who opted out and loses its reputation in a day. Existing contacts are updated rather than duplicated, and nobody who opted out here is resubscribed, so re-running an import is safe. Returns counts: inserted, updated, skipped, unsubscribed, bounced, complained, suppressed, properties_created. |
 | `get_contact` | Fetch one contact by id, with their audience memberships, custom properties and engagement dates. |
 | `update_contact` | Update a contact. Attributes are merged, so sending one field does not clear the rest. |
 | `list_segments` | List saved audience filters. Use a segment id when creating a campaign rather than describing the filter inline, so the same definition can be reused and counted. |
