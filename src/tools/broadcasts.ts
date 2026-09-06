@@ -5,10 +5,75 @@ export const listBroadcastsTool = {
   name: "list_broadcasts",
   description:
     "List campaigns with their status and send progress. A campaign showing 'paused' is not " +
-    "broken: it ran out of the day's sending quota part way and is waiting to continue. Use " +
-    "get_broadcast to see how much is left, and resume_broadcast to continue it now.",
+    "broken: it ran out of the day's sending quota part way and is waiting to continue. One " +
+    "showing 'testing' is an A/B test whose sample has gone out and whose winner is not yet " +
+    "decided. Use get_broadcast to see how much is left or how each variant is doing, and " +
+    "resume_broadcast to continue a paused one now.",
   schema: {},
   handler: async () => request("GET", "/v1/broadcasts"),
+};
+
+const variantSchema = z.object({
+  key: z
+    .string()
+    .describe("Your name for this variant, lowercase letters, digits, - or _: 'urgent', 'question'"),
+  subject: z.string().optional().describe("Subject for this variant; omit to use the campaign's"),
+  from_name: z.string().optional().describe("From display name for this variant; omit to use the campaign's"),
+  send_at: z
+    .string()
+    .optional()
+    .describe(
+      "ISO 8601 send time, for a send-time test only. Set it on every variant or on none; a " +
+        "send-time test mails the whole audience, each variant at its own time, with nothing held back",
+    ),
+});
+
+export const createBroadcastTool = {
+  name: "create_broadcast",
+  description:
+    "Create a campaign as a draft. Nothing is sent: follow with preview_broadcast, then " +
+    "send_broadcast. identity_id must be a marketing sending domain (see list_sending_domains; " +
+    "risk_class 'marketing'). To A/B test, pass 2 to 10 'variants' that differ in subject, " +
+    "from_name or send_at, and optionally 'ab_test'. A subject or from-name test sends " +
+    "sample_share of the audience (default 0.2) split evenly across the variants, waits " +
+    "decide_after_minutes (default 240) after the sample is out, picks the variant with the " +
+    "best unique open rate (or click rate with metric 'click'), and sends the rest to it. " +
+    "Each variant needs at least 100 recipients in the sample or the send is refused — " +
+    "preview_broadcast shows the number. Metric 'click' only works once the domain has click " +
+    "tracking; until then every variant shows zero clicks and the first variant wins by default.",
+  schema: {
+    audience_id: z.string(),
+    identity_id: z.string().describe("A marketing sending domain's id"),
+    name: z.string(),
+    subject: z.string(),
+    html: z.string(),
+    from_name: z.string().optional().describe("From display name, e.g. 'Ana at Example'"),
+    topic_key: z.string().optional().describe("Lets recipients opt out of this kind of mail only"),
+    segment_id: z.string().optional().describe("A saved segment to narrow the audience"),
+    segment: z
+      .object({
+        opened_within_days: z.number().int().optional(),
+        clicked_within_days: z.number().int().optional(),
+        exclude_unengaged_days: z.number().int().optional(),
+      })
+      .optional(),
+    variants: z.array(variantSchema).min(2).max(10).optional(),
+    ab_test: z
+      .object({
+        metric: z.enum(["open", "click"]).optional().describe("What decides the winner; default 'open'"),
+        sample_share: z
+          .number()
+          .optional()
+          .describe("Share of the audience in the test, 0.05 to 1; default 0.2. Ignored for a send-time test"),
+        decide_after_minutes: z
+          .number()
+          .int()
+          .optional()
+          .describe("How long after the sample is fully sent to decide; 15 to 10080, default 240"),
+      })
+      .optional(),
+  },
+  handler: async (args: Record<string, unknown>) => request("POST", "/v1/broadcasts", args),
 };
 
 export const previewBroadcastTool = {
@@ -16,7 +81,8 @@ export const previewBroadcastTool = {
   description:
     "How many contacts a campaign would reach, and whether the reputation gate would allow it. " +
     "Always run this before sending — it is the only way to see the size of a campaign without " +
-    "starting it.",
+    "starting it. For an A/B test it also reports the sample size and per-variant count " +
+    "against the 100-per-variant floor; a send below the floor is refused.",
   schema: { id: z.string() },
   handler: async (args: Record<string, unknown>) =>
     request("GET", `/v1/broadcasts/${args.id}/preview`),
@@ -25,12 +91,34 @@ export const previewBroadcastTool = {
 export const getBroadcastTool = {
   name: "get_broadcast",
   description:
-    "One campaign, with a 'progress' object while it is sending or paused: how many addresses " +
-    "are still pending, sent, failed, or skipped because the person opted out after the " +
-    "campaign started. This is how you tell a paused campaign that is still making progress " +
-    "from one waiting on quota.",
+    "One campaign, with a 'progress' object while it is sending, paused or testing: how many " +
+    "addresses are still pending, sent, failed, or skipped because the person opted out after " +
+    "the campaign started. This is how you tell a paused campaign that is still making " +
+    "progress from one waiting on quota. An A/B test carries 'ab_test' with live per-variant " +
+    "results — sent, unique opens, unique clicks and their rates — plus 'decide_at' and, once " +
+    "decided, 'winner' and 'decided_by'. Status 'testing' means the sample is out and the rest " +
+    "of the audience is waiting on the decision.",
   schema: { id: z.string() },
   handler: async (args: Record<string, unknown>) => request("GET", `/v1/broadcasts/${args.id}`),
+};
+
+export const pickBroadcastWinnerTool = {
+  name: "pick_broadcast_winner",
+  description:
+    "Decide an A/B test now instead of waiting for decide_at. Pass 'variant' to choose a key " +
+    "yourself, or omit it to have the metric decide on the figures so far. The rest of the " +
+    "audience is then sent to the winner and cannot be redirected. Only a campaign in status " +
+    "'testing' can be decided; anything else answers 409. Read get_broadcast first — a " +
+    "variant with a handful of opens more is not a result, and the worker decides on its own " +
+    "at decide_at.",
+  schema: {
+    id: z.string(),
+    variant: z.string().optional().describe("Variant key to send the remainder to; omit to let the metric decide"),
+  },
+  handler: async (args: Record<string, unknown>) => {
+    const { id, ...body } = args;
+    return request("POST", `/v1/broadcasts/${id}/winner`, body);
+  },
 };
 
 export const resumeBroadcastTool = {
@@ -40,7 +128,8 @@ export const resumeBroadcastTool = {
     "still pending — the audience was frozen when the campaign started and everyone already " +
     "reached is marked — so calling this twice cannot double-send. Only works on a paused " +
     "campaign; anything else answers 409. A background worker also resumes paused campaigns on " +
-    "its own once quota frees up, so use this only when waiting is not acceptable.",
+    "its own once quota frees up, so use this only when waiting is not acceptable. An A/B test " +
+    "paused mid-sample resumes the sample; one paused after the decision resumes the winner.",
   schema: { id: z.string() },
   handler: async (args: Record<string, unknown>) =>
     request("POST", `/v1/broadcasts/${args.id}/resume`),
@@ -52,7 +141,10 @@ export const sendBroadcastTool = {
     "Send a campaign now, or schedule it with scheduled_at. This mails every contact in the " +
     "segment and cannot be undone once started — run preview_broadcast first. A campaign bigger " +
     "than the day's remaining quota is not rejected: it sends what it can and stops as 'paused', " +
-    "then continues later. That is expected, not an error to retry.",
+    "then continues later. That is expected, not an error to retry. An A/B test sends its " +
+    "sample, goes to 'testing', and sends the rest to the winner after decide_after_minutes " +
+    "or when pick_broadcast_winner is called. A send-time test is scheduled by its variants' " +
+    "send_at and does not accept scheduled_at.",
   schema: {
     id: z.string(),
     scheduled_at: z.string().optional().describe("ISO 8601 timestamp; omit to send now"),

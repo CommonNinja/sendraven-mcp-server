@@ -1,6 +1,6 @@
 {
   "name": "@sendraven/mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "MCP server for SendRaven: send email, read replies as threads, run campaigns, and decide approvals, with per-key limits for agents.",
   "mcpName": "ai.sendraven/mcp",
   "license": "MIT",
