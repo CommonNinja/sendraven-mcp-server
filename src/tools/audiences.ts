@@ -20,7 +20,7 @@ const AUDIENCE_ID = z
 /** Same reason: a model that knows the person by address will pass the address. */
 const CONTACT_ID = z
   .string()
-  .describe("The contact's id (a UUID) from find_contact, add_contact or list_contacts — not the email address. Call find_contact with the address first if that is all you have.");
+  .describe("The contact's id (a UUID) from find_contact, add_contact or get_contact — not the email address. Call find_contact with the address first if that is all you have.");
 
 const CONTACT_STATUS = z.enum(["subscribed", "unsubscribed", "bounced", "complained"]);
 
@@ -128,9 +128,9 @@ export const findContactTool = {
   name: "find_contact",
   description:
     "Find a contact by address across every audience, without knowing which list they are on. " +
-    "Use email for an exact match, or q for a prefix. Returns each audience membership " +
-    "separately — the same address on three lists is three rows — and whether each is " +
-    "unsubscribed.",
+    "Use email for an exact match, or q for a prefix. A person exists once per workspace, so " +
+    "each row is one contact with audience_ids listing every list they are on, first_name, " +
+    "last_name, tags, attributes and whether they are unsubscribed.",
   schema: {
     email: z.string().optional().describe("Exact address"),
     q: z.string().optional().describe("Address prefix, for a partial match"),
