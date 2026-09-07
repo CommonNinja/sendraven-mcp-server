@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { request } from "../client";
 
+/** A model that knows a campaign by its name will pass the name unless told otherwise. */
+const BROADCAST_ID = z
+  .string()
+  .describe("The campaign's id from create_broadcast or list_broadcasts (a UUID), not its name");
+
 export const listBroadcastsTool = {
   name: "list_broadcasts",
   description:
@@ -42,14 +47,14 @@ export const createBroadcastTool = {
     "preview_broadcast shows the number. Metric 'click' only works once the domain has click " +
     "tracking; until then every variant shows zero clicks and the first variant wins by default.",
   schema: {
-    audience_id: z.string(),
-    identity_id: z.string().describe("A marketing sending domain's id"),
+    audience_id: z.string().describe("The audience's id from list_audiences (a UUID), not its name"),
+    identity_id: z.string().describe("A marketing sending domain's id from list_sending_domains (a UUID), not the domain name"),
     name: z.string(),
     subject: z.string(),
     html: z.string(),
     from_name: z.string().optional().describe("From display name, e.g. 'Ana at Example'"),
     topic_key: z.string().optional().describe("Lets recipients opt out of this kind of mail only"),
-    segment_id: z.string().optional().describe("A saved segment to narrow the audience"),
+    segment_id: z.string().optional().describe("A saved segment's id from list_segments (a UUID), not its name or key"),
     segment: z
       .object({
         opened_within_days: z.number().int().optional(),
@@ -83,7 +88,7 @@ export const previewBroadcastTool = {
     "Always run this before sending — it is the only way to see the size of a campaign without " +
     "starting it. For an A/B test it also reports the sample size and per-variant count " +
     "against the 100-per-variant floor; a send below the floor is refused.",
-  schema: { id: z.string() },
+  schema: { id: BROADCAST_ID },
   handler: async (args: Record<string, unknown>) =>
     request("GET", `/v1/broadcasts/${args.id}/preview`),
 };
@@ -98,7 +103,7 @@ export const getBroadcastTool = {
     "results — sent, unique opens, unique clicks and their rates — plus 'decide_at' and, once " +
     "decided, 'winner' and 'decided_by'. Status 'testing' means the sample is out and the rest " +
     "of the audience is waiting on the decision.",
-  schema: { id: z.string() },
+  schema: { id: BROADCAST_ID },
   handler: async (args: Record<string, unknown>) => request("GET", `/v1/broadcasts/${args.id}`),
 };
 
@@ -112,7 +117,7 @@ export const pickBroadcastWinnerTool = {
     "variant with a handful of opens more is not a result, and the worker decides on its own " +
     "at decide_at.",
   schema: {
-    id: z.string(),
+    id: BROADCAST_ID,
     variant: z.string().optional().describe("Variant key to send the remainder to; omit to let the metric decide"),
   },
   handler: async (args: Record<string, unknown>) => {
@@ -130,7 +135,7 @@ export const resumeBroadcastTool = {
     "campaign; anything else answers 409. A background worker also resumes paused campaigns on " +
     "its own once quota frees up, so use this only when waiting is not acceptable. An A/B test " +
     "paused mid-sample resumes the sample; one paused after the decision resumes the winner.",
-  schema: { id: z.string() },
+  schema: { id: BROADCAST_ID },
   handler: async (args: Record<string, unknown>) =>
     request("POST", `/v1/broadcasts/${args.id}/resume`),
 };
@@ -146,7 +151,7 @@ export const sendBroadcastTool = {
     "or when pick_broadcast_winner is called. A send-time test is scheduled by its variants' " +
     "send_at and does not accept scheduled_at.",
   schema: {
-    id: z.string(),
+    id: BROADCAST_ID,
     scheduled_at: z.string().optional().describe("ISO 8601 timestamp; omit to send now"),
   },
   handler: async (args: Record<string, unknown>) => {

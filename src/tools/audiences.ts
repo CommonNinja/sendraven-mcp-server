@@ -8,6 +8,20 @@ export const listAudiencesTool = {
   handler: async () => request("GET", "/v1/audiences"),
 };
 
+/**
+ * Every tool that takes an audience says the same thing, because the failure
+ * is the same: a model asked to "add Ana to Newsletter" passes the name, the
+ * API answers 404, and the person never lands on the list.
+ */
+const AUDIENCE_ID = z
+  .string()
+  .describe("The audience's id from list_audiences (a UUID), not its name. Call list_audiences first if you only know the name.");
+
+/** Same reason: a model that knows the person by address will pass the address. */
+const CONTACT_ID = z
+  .string()
+  .describe("The contact's id (a UUID) from find_contact, add_contact or list_contacts — not the email address. Call find_contact with the address first if that is all you have.");
+
 const CONTACT_STATUS = z.enum(["subscribed", "unsubscribed", "bounced", "complained"]);
 
 const contactFields = {
@@ -34,7 +48,7 @@ export const addContactTool = {
     "suppression as well as the flag, and an add never resubscribes someone who opted out here. " +
     "Safe to retry. For more than a handful of people use import_contacts.",
   schema: {
-    audience_id: z.string(),
+    audience_id: AUDIENCE_ID,
     ...contactFields,
   },
   handler: async (args: Record<string, unknown>) => {
@@ -54,7 +68,7 @@ export const importContactsTool = {
     "here is resubscribed, so re-running an import is safe. Returns counts: inserted, updated, " +
     "skipped, unsubscribed, bounced, complained, suppressed, properties_created.",
   schema: {
-    audience_id: z.string(),
+    audience_id: AUDIENCE_ID,
     contacts: z.array(z.object(contactFields)).min(1).max(5000),
     source: z
       .string()
@@ -81,7 +95,7 @@ export const updateContactTool = {
   description:
     "Update a contact. Attributes are merged, so sending one field does not clear the rest.",
   schema: {
-    id: z.string(),
+    id: CONTACT_ID,
     first_name: z.string().optional(),
     last_name: z.string().optional(),
     attributes: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
@@ -141,8 +155,8 @@ export const removeFromAudienceTool = {
     "their suppression and their engagement history. To remove the person entirely use " +
     "delete_contact — leaving a list and being forgotten are different things.",
   schema: {
-    audience_id: z.string(),
-    contact_id: z.string(),
+    audience_id: AUDIENCE_ID,
+    contact_id: CONTACT_ID,
   },
   handler: async (args: Record<string, unknown>) =>
     request("DELETE", `/v1/audiences/${args.audience_id}/contacts/${args.contact_id}`),
@@ -155,7 +169,7 @@ export const deleteContactTool = {
     "suppression and topic preferences are kept on purpose — an opt-out has to outlive the " +
     "contact record, or the next import silently puts them back on the list. To take someone " +
     "off a single audience use remove_from_audience instead.",
-  schema: { contact_id: z.string() },
+  schema: { contact_id: CONTACT_ID },
   handler: async (args: Record<string, unknown>) =>
     request("DELETE", `/v1/contacts/${args.contact_id}`),
 };
@@ -169,7 +183,7 @@ export const tagContactTool = {
     "audience they are on. Call list_tags first to see what the workspace already uses, rather " +
     "than inventing a synonym for an existing tag.",
   schema: {
-    contact_id: z.string(),
+    contact_id: CONTACT_ID,
     add: z.array(z.string()).optional(),
     remove: z.array(z.string()).optional(),
   },

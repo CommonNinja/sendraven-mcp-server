@@ -30,7 +30,7 @@ export const addDomainTool = {
 export const verifyDomainTool = {
   name: "verify_sending_domain",
   description: "Re-check a domain's DNS records now instead of waiting for the background monitor.",
-  schema: { id: z.string() },
+  schema: { id: z.string().describe("The sending domain's id from list_sending_domains (a UUID), not the domain name") },
   handler: async (args: Record<string, unknown>) =>
     request("POST", `/v1/domains/${args.id}/verify`),
 };

@@ -18,7 +18,7 @@ export const enrollTool = {
     "which you would otherwise have to track and cancel by hand. Enrolling the same person " +
     "twice is a no-op, so it is safe to retry a call you are unsure about.",
   schema: {
-    automation_id: z.string(),
+    automation_id: z.string().describe("The automation's id from list_automations (a UUID), not its name or slug"),
     email: z.string().email(),
     variables: z
       .record(z.string())
