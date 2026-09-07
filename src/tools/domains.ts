@@ -16,7 +16,9 @@ export const addDomainTool = {
     "Register a sending domain and get back the DNS records to publish. Give the domain you " +
     "send from — mail.<domain> and news.<domain> are provisioned beneath it and the right one " +
     "is chosen per message, so a marketing complaint spike can never affect password reset " +
-    "delivery. Pass risk_class only to provision one of the two on its own.",
+    "delivery. Pass risk_class only to provision one of the two on its own. Two records come " +
+    "back marked optional: an inbound MX so replies land in threads, and a link. CNAME that " +
+    "turns on click tracking on the customer's own name once its certificate is issued.",
   schema: {
     domain: z.string().describe("The domain you send from, e.g. example.com"),
     risk_class: z
