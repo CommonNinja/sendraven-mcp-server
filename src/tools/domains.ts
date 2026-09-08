@@ -5,7 +5,10 @@ export const listDomainsTool = {
   name: "list_sending_domains",
   description:
     "List sending domains with their verification status and the DNS records each one needs. " +
-    "Each record shows what is currently published, so this diagnoses a stuck verification.",
+    "Each record shows what is currently published, so this diagnoses a stuck verification. " +
+    "mail_from says whether SES has adopted the bounce. subdomain as the Return-Path: pending " +
+    "for up to 72 hours after the MX appears, then active. A verified domain sends fine " +
+    "meanwhile; only SPF alignment waits.",
   schema: {},
   handler: async () => request("GET", "/v1/domains"),
 };
@@ -31,7 +34,9 @@ export const addDomainTool = {
 
 export const verifyDomainTool = {
   name: "verify_sending_domain",
-  description: "Re-check a domain's DNS records now instead of waiting for the background monitor.",
+  description:
+    "Re-check a domain's DNS records now instead of waiting for the background monitor. Also " +
+    "restarts bounce-path (mail_from) verification when SES gave up before the MX record existed.",
   schema: { id: z.string().describe("The sending domain's id from list_sending_domains (a UUID), not the domain name") },
   handler: async (args: Record<string, unknown>) =>
     request("POST", `/v1/domains/${args.id}/verify`),
