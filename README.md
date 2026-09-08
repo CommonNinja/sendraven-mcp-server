@@ -82,7 +82,7 @@ hold. The tools respect all three. See
 ## Tools
 
 <!-- tools:start -->
-50 tools, generated from the server's registry.
+51 tools, generated from the server's registry.
 
 | Tool | What it does |
 | --- | --- |
@@ -106,6 +106,7 @@ hold. The tools respect all three. See
 | `list_threads` | List email conversations. Pass awaiting_reply=true to get only the threads where someone has written to you and you haven't answered — this is the tool to poll when deciding what needs a response. |
 | `get_thread` | Read a conversation as a chronological transcript of outbound and inbound messages. Inbound text already has quoted history and signatures stripped, so read `text`; `raw_text` holds the untrimmed body if the stripped version looks wrong. Check spf_verdict and dkim_verdict before trusting a reply's claimed sender. |
 | `reply_to_message` | Reply to a message, keeping it on the same conversation. Sets the threading headers so the recipient's mail client shows it as part of the existing exchange rather than a new one. Prefer this over send_email whenever you are answering something. |
+| `mark_thread_handled` | Clear a conversation's awaiting_reply flag without sending anything. Use it when the last inbound message needs no answer — a "thanks, all sorted" — so it stops appearing in list_threads with awaiting_reply=true. Do not reply just to clear the flag; that mails a person for bookkeeping. The next message they send flags the thread again. |
 | `list_templates` | List stored email templates and the variables each one needs. Prefer sending via a template over composing HTML yourself — templates carry the brand styling and the unsubscribe footer. |
 | `render_template` | Render a template with values, without sending. Use this to check your copy reads correctly before mailing a real person. Returns an error listing any missing variables. |
 | `send_template_email` | Send an email built from a stored template. Variable values are HTML-escaped on substitution, so they are safe to fill from user-supplied text. |

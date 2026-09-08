@@ -28,7 +28,7 @@ import {
   resumeBroadcastTool,
   sendBroadcastTool,
 } from "./broadcasts";
-import { getThreadTool, listThreadsTool, replyToMessageTool } from "./threads";
+import { getThreadTool, listThreadsTool, markThreadHandledTool, replyToMessageTool } from "./threads";
 import { listTemplatesTool, renderTemplateTool, sendTemplateTool } from "./templates";
 import { decideApprovalTool, listApprovalsTool } from "./approvals";
 import { emitEventTool, enrollTool, listAutomationsTool } from "./automations";
@@ -91,6 +91,7 @@ export const TOOLS: ToolDef[] = [
   listThreadsTool,
   getThreadTool,
   replyToMessageTool,
+  markThreadHandledTool,
   listTemplatesTool,
   renderTemplateTool,
   sendTemplateTool,

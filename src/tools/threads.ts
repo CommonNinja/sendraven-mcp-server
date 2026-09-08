@@ -46,3 +46,14 @@ export const replyToMessageTool = {
   },
   handler: async (args: Record<string, unknown>) => request("POST", "/v1/emails", args),
 };
+
+export const markThreadHandledTool = {
+  name: "mark_thread_handled",
+  description:
+    "Clear a conversation's awaiting_reply flag without sending anything. Use it when the " +
+    "last inbound message needs no answer — a \"thanks, all sorted\" — so it stops appearing in " +
+    "list_threads with awaiting_reply=true. Do not reply just to clear the flag; that mails a " +
+    "person for bookkeeping. The next message they send flags the thread again.",
+  schema: { id: z.string().describe("Thread id") },
+  handler: async (args: Record<string, unknown>) => request("POST", `/v1/threads/${args.id}/handled`),
+};
