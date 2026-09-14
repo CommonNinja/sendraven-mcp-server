@@ -46,7 +46,8 @@ export const addContactTool = {
     "of audiences, so adding an address that already exists joins them to this list rather than " +
     "creating a second copy. Pass status when the person has opted out elsewhere — it writes the " +
     "suppression as well as the flag, and an add never resubscribes someone who opted out here. " +
-    "Safe to retry. For more than a handful of people use import_contacts.",
+    "Someone new to the audience starts any automation triggered by joining it; re-adding an " +
+    "existing member starts nothing. Safe to retry. For more than a handful of people use import_contacts.",
   schema: {
     audience_id: AUDIENCE_ID,
     ...contactFields,
@@ -66,7 +67,7 @@ export const importContactsTool = {
     "the first campaign, or the new domain mails people who opted out and loses its reputation " +
     "in a day. Existing contacts are updated rather than duplicated, and nobody who opted out " +
     "here is resubscribed, so re-running an import is safe. Returns counts: inserted, updated, " +
-    "skipped, unsubscribed, bounced, complained, suppressed, properties_created.",
+    "skipped, unsubscribed, bounced, complained, suppressed, properties_created, automations_started.",
   schema: {
     audience_id: AUDIENCE_ID,
     contacts: z.array(z.object(contactFields)).min(1).max(5000),
@@ -74,9 +75,21 @@ export const importContactsTool = {
       .string()
       .optional()
       .describe("Where the list came from, e.g. \"Mailchimp\" — recorded on each suppression"),
+    trigger_automations: z
+      .boolean()
+      .optional()
+      .describe(
+        "Start automations triggered by joining this audience for everyone new to it. Off by " +
+          "default: a migrated list is not new signups, and a welcome sequence to all of it at " +
+          "once is a cold blast that burns the sending domain. Only set it for genuinely new people.",
+      ),
   },
   handler: async (args: Record<string, unknown>) => {
-    const q = args.source ? `?source=${encodeURIComponent(String(args.source))}` : "";
+    const params = new URLSearchParams();
+    if (args.source) params.set("source", String(args.source));
+    if (args.trigger_automations) params.set("trigger_automations", "true");
+    const qs = params.toString();
+    const q = qs ? `?${qs}` : "";
     return request("POST", `/v1/audiences/${args.audience_id}/contacts${q}`, args.contacts);
   },
 };
@@ -181,7 +194,9 @@ export const tagContactTool = {
     "custom properties, which are declared fields with a value. They are lower-cased and spaces " +
     "become hyphens, so VIP and vip are the same tag. Tagging reaches the person across every " +
     "audience they are on. Call list_tags first to see what the workspace already uses, rather " +
-    "than inventing a synonym for an existing tag.",
+    "than inventing a synonym for an existing tag. Adding a tag an automation exits on (e.g. " +
+    "customer), or removing one it requires (e.g. trial), ends the person's enrolment in it at " +
+    "once; the response reports enrollments_ended.",
   schema: {
     contact_id: CONTACT_ID,
     add: z.array(z.string()).optional(),
