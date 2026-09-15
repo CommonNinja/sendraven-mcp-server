@@ -82,7 +82,7 @@ hold. The tools respect all three. See
 ## Tools
 
 <!-- tools:start -->
-51 tools, generated from the server's registry.
+53 tools, generated from the server's registry.
 
 | Tool | What it does |
 | --- | --- |
@@ -113,6 +113,8 @@ hold. The tools respect all three. See
 | `list_pending_approvals` | List messages held for human approval, with their full content. A key configured to require approval drafts rather than sends; a person releases it. If your send returned status 'pending_approval', it is waiting here — do not retry the send. |
 | `decide_approval` | Approve or reject a held message. Approving sends it immediately. Only use this when a human has explicitly told you which decision to make — the hold exists precisely so that an agent is not the one deciding. |
 | `list_automations` | List multi-step email sequences and how many people are currently in each. Use this to find the right automation before enrolling someone. |
+| `create_automation` | Define a multi-step sequence as a draft; nothing is sent until it is activated, from the dashboard or with POST /v1/automations/{id}/status. Prefer this over scheduling several emails yourself: it ends on its own when the person unsubscribes, replies, bounces, opts out of its topic, or their tags say so. identity_id must be a marketing sending domain (see list_sending_domains; risk_class 'marketing') and from must sit on it; both are checked here rather than at the first send. Set reply_to only when replies should go somewhere other than from, and know that it disables the reply exit: SendRaven never sees mail sent to another domain. |
+| `update_automation` | Change the rules that take someone out of a sequence (topic_key, exit_tags, required_tags, exit_on_reply) or its reply_to. Steps and the trigger are fixed once created. Fields left out keep their value; a null topic_key or reply_to, or an empty tag list, clears it. People already enrolled see the change from their next step, so a mistaken edit can be put back before it has ended anyone's sequence. Clear reply_to to have replies threaded in SendRaven again and stop the drip on their own. |
 | `enroll_in_automation` | Put someone into a multi-step sequence. Prefer this over scheduling several emails yourself: the sequence stops on its own if they unsubscribe (from everything or from the automation's topic), reply, hard bounce, gain one of its exit tags, or lose one of its required tags, which you would otherwise have to track and cancel by hand. To stop a sequence for someone who converted, tag the contact rather than cancelling anything. Enrolling the same person twice is a no-op, so it is safe to retry. enrolled: false with reason suppressed, unsubscribed_from_topic, exit_tag or required_tag_missing means they are deliberately excluded; do not work around it. |
 | `emit_event` | Emit a named event, starting every automation that waits on it — for example 'trial_started' or 'invoice_overdue'. Use this when you want the configured sequences to decide what happens, rather than naming an automation yourself. |
 | `list_topics` | List subscription topics — the categories a person can opt out of individually. Pass a topic when sending marketing mail so recipients can unsubscribe from that kind alone rather than from everything. |
