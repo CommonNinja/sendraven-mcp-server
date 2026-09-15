@@ -15,10 +15,18 @@ export const metricsTool = {
 export const listScheduledTool = {
   name: "list_scheduled_emails",
   description:
-    "Messages queued to send later but not yet sent. Cancel one with cancel_scheduled_email.",
-  schema: { limit: z.number().int().min(1).max(200).optional() },
-  handler: async (args: Record<string, unknown>) =>
-    request("GET", `/v1/emails?status=scheduled&limit=${args.limit ?? 50}`),
+    "Messages queued to send later but not yet sent, newest first. Cancel one with " +
+    "cancel_scheduled_email. At most 100 per call; while has_more is true, pass next_cursor back " +
+    "as cursor.",
+  schema: {
+    limit: z.number().int().min(1).max(100).optional().describe("Page size, 1 to 100; defaults to 50"),
+    cursor: z.string().optional().describe("next_cursor from the previous page, passed back unchanged"),
+  },
+  handler: async (args: Record<string, unknown>) => {
+    const qs = new URLSearchParams({ status: "scheduled", limit: String(args.limit ?? 50) });
+    if (args.cursor !== undefined) qs.set("cursor", String(args.cursor));
+    return request("GET", `/v1/emails?${qs}`);
+  },
 };
 
 export const batchSuppressTool = {
@@ -26,11 +34,17 @@ export const batchSuppressTool = {
   description:
     "Stop sending to many addresses at once — the path for importing another provider's " +
     "unsubscribe list before a first campaign. Without it, everyone who already opted out " +
-    "there gets mailed again here.",
+    "there gets mailed again here. Note the defaults differ from add_suppression: scope " +
+    "'marketing' and reason 'list_hygiene'. Pass reason 'unsubscribe' for a list of opt-outs; " +
+    "that also cancels their queued scheduled sends and ends their automation enrolments. " +
+    "Addresses are de-duplicated; the response counts suppressed and duplicates.",
   schema: {
-    emails: z.array(z.string().email()).max(10000),
-    scope: z.enum(["all", "transactional", "marketing"]).optional(),
-    reason: z.enum(["manual", "list_hygiene", "unsubscribe"]).optional(),
+    emails: z.array(z.string().email()).min(1).max(10000),
+    scope: z.enum(["all", "transactional", "marketing"]).optional().describe("Defaults to marketing"),
+    reason: z
+      .enum(["manual", "list_hygiene", "unsubscribe"])
+      .optional()
+      .describe("Defaults to list_hygiene. unsubscribe also cancels queued mail and ends enrolments"),
   },
   handler: async (args: Record<string, unknown>) => request("POST", "/v1/suppressions/batch", args),
 };
@@ -39,18 +53,32 @@ export const listWebhookEventsTool = {
   name: "list_webhook_deliveries",
   description:
     "Recent delivery attempts for a webhook endpoint, with status codes and errors. This " +
-    "is how to tell 'we never sent it' from 'your endpoint returned 500'.",
-  schema: { endpoint_id: z.string(), limit: z.number().int().min(1).max(200).optional() },
+    "is how to tell 'we never sent it' from 'your endpoint returned 500'. Newest first, the most " +
+    "recent `limit` only; not paged.",
+  schema: {
+    endpoint_id: z.string(),
+    limit: z.number().int().min(1).max(200).optional().describe("1 to 200; defaults to 50"),
+  },
   handler: async (args: Record<string, unknown>) =>
     request("GET", `/v1/webhook-endpoints/${args.endpoint_id}/events?limit=${args.limit ?? 50}`),
 };
 
 export const broadcastRecipientsTool = {
   name: "list_broadcast_recipients",
-  description: "Who a campaign reached and what happened to each message.",
-  schema: { id: z.string(), limit: z.number().int().min(1).max(1000).optional() },
-  handler: async (args: Record<string, unknown>) =>
-    request("GET", `/v1/broadcasts/${args.id}/recipients?limit=${args.limit ?? 200}`),
+  description:
+    "Who a campaign reached and what happened to each message, with the A/B variant when there " +
+    "is one. At most 200 per call; while has_more is true, pass next_cursor (a message id) back " +
+    "as cursor.",
+  schema: {
+    id: z.string().describe("The campaign's id from create_broadcast or list_broadcasts (a UUID), not its name"),
+    limit: z.number().int().min(1).max(200).optional().describe("Page size, 1 to 200; defaults to 200"),
+    cursor: z.string().optional().describe("next_cursor from the previous page, passed back unchanged"),
+  },
+  handler: async (args: Record<string, unknown>) => {
+    const qs = new URLSearchParams({ limit: String(args.limit ?? 200) });
+    if (args.cursor !== undefined) qs.set("cursor", String(args.cursor));
+    return request("GET", `/v1/broadcasts/${args.id}/recipients?${qs}`);
+  },
 };
 
 export const listApiKeysTool = {

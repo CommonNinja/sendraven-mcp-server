@@ -7,8 +7,10 @@ export const listDomainsTool = {
     "List sending domains with their verification status and the DNS records each one needs. " +
     "Each record shows what is currently published, so this diagnoses a stuck verification. " +
     "mail_from says whether SES has adopted the bounce. subdomain as the Return-Path: pending " +
-    "for up to 72 hours after the MX appears, then active. A verified domain sends fine " +
-    "meanwhile; only SPF alignment waits.",
+    "while SES polls for its MX record, then active. SES polls for 72 hours from when the domain " +
+    "was added, not from when the MX appears, and then marks it failed; publishing the MX later " +
+    "and calling verify_sending_domain restarts it. A verified domain sends fine meanwhile; only " +
+    "SPF alignment waits.",
   schema: {},
   handler: async () => request("GET", "/v1/domains"),
 };
@@ -21,7 +23,9 @@ export const addDomainTool = {
     "is chosen per message, so a marketing complaint spike can never affect password reset " +
     "delivery. Pass risk_class only to provision one of the two on its own. Two records come " +
     "back marked optional: an inbound MX so replies land in threads, and a link. CNAME that " +
-    "turns on click tracking on the customer's own name once its certificate is issued.",
+    "turns on click tracking on the customer's own name once its certificate is issued. " +
+    "Adding a domain that already exists returns it rather than a duplicate. A plan with no " +
+    "room for another domain answers 402 plan_limit; retrying will not help.",
   schema: {
     domain: z.string().describe("The domain you send from, e.g. example.com"),
     risk_class: z

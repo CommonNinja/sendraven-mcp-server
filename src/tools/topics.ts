@@ -26,7 +26,10 @@ export const setPreferencesTool = {
   name: "set_email_preferences",
   description:
     "Set which topics a person receives. Only do this when they have actually asked — " +
-    "silently re-subscribing someone who opted out is what generates spam complaints.",
+    "silently re-subscribing someone who opted out is what generates spam complaints. Every " +
+    "key must be an existing topic from list_topics: one unknown key refuses the whole call " +
+    "with 422 unknown_topic and nothing is saved. Setting a topic to false also ends any " +
+    "automation enrolment sent under that topic.",
   schema: {
     email: z.string().email(),
     topics: z.record(z.boolean()).describe("Topic key to subscribed, e.g. {\"newsletter\": false}"),

@@ -5,8 +5,9 @@ export const listTemplatesTool = {
   name: "list_templates",
   description:
     "List stored email templates and the variables each one needs. Prefer sending via a " +
-    "template over composing HTML yourself — templates carry the brand styling and the " +
-    "unsubscribe footer.",
+    "template over composing HTML yourself — templates carry the workspace's reviewed subject, " +
+    "copy and styling. They do not carry the unsubscribe footer: that is added at send time to " +
+    "marketing mail, whether or not it came from a template.",
   schema: {},
   handler: async () => request("GET", "/v1/templates"),
 };
@@ -15,7 +16,8 @@ export const renderTemplateTool = {
   name: "render_template",
   description:
     "Render a template with values, without sending. Use this to check your copy reads " +
-    "correctly before mailing a real person. Returns an error listing any missing variables.",
+    "correctly before mailing a real person. A missing variable answers 422 missing_variables " +
+    "with the list in `missing`; an unknown slug answers 404.",
   schema: {
     slug: z.string(),
     variables: z.record(z.string()),
@@ -28,7 +30,8 @@ export const sendTemplateTool = {
   name: "send_template_email",
   description:
     "Send an email built from a stored template. Variable values are HTML-escaped on " +
-    "substitution, so they are safe to fill from user-supplied text.",
+    "substitution, so they are safe to fill from user-supplied text. An unknown slug or a missing " +
+    "variable is refused with 422 and nothing is sent.",
   schema: {
     template: z.string().describe("Template slug"),
     variables: z.record(z.string()),

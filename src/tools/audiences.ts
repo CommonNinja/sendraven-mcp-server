@@ -3,9 +3,21 @@ import { request } from "../client";
 
 export const listAudiencesTool = {
   name: "list_audiences",
-  description: "List contact lists and how many contacts each holds.",
-  schema: {},
-  handler: async () => request("GET", "/v1/audiences"),
+  description:
+    "List contact lists, newest first, with each one's id and contact_count. Paged: at most 100 " +
+    "per call; while has_more is true, pass next_cursor back as cursor, or a list you are looking " +
+    "for may be on a later page.",
+  schema: {
+    limit: z.number().int().min(1).max(100).optional().describe("Page size, 1 to 100; defaults to 50"),
+    cursor: z.string().optional().describe("next_cursor from the previous page, passed back unchanged"),
+  },
+  handler: async (args: Record<string, unknown>) => {
+    const qs = new URLSearchParams();
+    if (args.limit !== undefined) qs.set("limit", String(args.limit));
+    if (args.cursor !== undefined) qs.set("cursor", String(args.cursor));
+    const q = qs.toString();
+    return request("GET", `/v1/audiences${q ? `?${q}` : ""}`);
+  },
 };
 
 /**
@@ -26,9 +38,13 @@ const CONTACT_STATUS = z.enum(["subscribed", "unsubscribed", "bounced", "complai
 
 const contactFields = {
   email: z.string().email(),
-  first_name: z.string().optional(),
-  last_name: z.string().optional(),
-  tags: z.array(z.string()).optional().describe("Flat labels; lower-cased, spaces become hyphens"),
+  first_name: z.string().max(120).optional(),
+  last_name: z.string().max(120).optional(),
+  tags: z
+    .array(z.string().min(1).max(60))
+    .max(50)
+    .optional()
+    .describe("Flat labels; lower-cased, spaces become hyphens"),
   attributes: z
     .record(z.union([z.string(), z.number(), z.boolean()]))
     .optional()
@@ -106,11 +122,16 @@ export const getContactTool = {
 export const updateContactTool = {
   name: "update_contact",
   description:
-    "Update a contact. Attributes are merged, so sending one field does not clear the rest.",
+    "Update a contact. Attributes are merged, so sending one field does not clear the rest. " +
+    "unsubscribed: true is a real opt-out: it suppresses the address for marketing, cancels " +
+    "their pending sends and ends their automation enrolments. unsubscribed: false lifts a " +
+    "marketing unsubscribe — only do it when the person asked. Resubscribing someone who hard " +
+    "bounced or complained is refused with 409 before anything in the request is written.",
   schema: {
     id: CONTACT_ID,
-    first_name: z.string().optional(),
-    last_name: z.string().optional(),
+    first_name: z.string().max(120).optional(),
+    last_name: z.string().max(120).optional(),
+    unsubscribed: z.boolean().optional().describe("true to opt them out of marketing, false to undo an unsubscribe"),
     attributes: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
   },
   handler: async (args: Record<string, unknown>) => {
@@ -140,22 +161,29 @@ export const countSegmentTool = {
 export const findContactTool = {
   name: "find_contact",
   description:
-    "Find a contact by address across every audience, without knowing which list they are on. " +
-    "Use email for an exact match, or q for a prefix. A person exists once per workspace, so " +
-    "each row is one contact with audience_ids listing every list they are on, first_name, " +
-    "last_name, tags, attributes and whether they are unsubscribed.",
+    "Find a contact by address across every audience, without knowing which list they are on, " +
+    "or list the workspace's contacts by tag or subscription. Use email for an exact match, or q " +
+    "for an address prefix. A person exists once per workspace, so each row is one contact with " +
+    "audience_ids listing every list they are on, first_name, last_name, tags, attributes and " +
+    "whether they are unsubscribed. Newest first, at most 100 per call; while has_more is true, " +
+    "pass next_cursor back as cursor with the same filters.",
   schema: {
     email: z.string().optional().describe("Exact address"),
-    q: z.string().optional().describe("Address prefix, for a partial match"),
+    q: z.string().optional().describe("Address prefix, for a partial match. Ignored when email is given"),
+    tag: z
+      .array(z.string())
+      .optional()
+      .describe("Only contacts carrying every one of these tags (see list_tags)"),
     unsubscribed: z.boolean().optional().describe("Filter to only opted-in or only opted-out"),
-    limit: z.number().optional(),
-    cursor: z.string().optional().describe("An address, from a previous call's next_cursor"),
+    limit: z.number().int().min(1).max(100).optional().describe("Page size, 1 to 100; defaults to 50"),
+    cursor: z.string().optional().describe("next_cursor from the previous call, passed back unchanged"),
   },
   handler: async (args: Record<string, unknown>) => {
     const q = new URLSearchParams();
     for (const k of ["email", "q", "limit", "cursor"]) {
       if (args[k] !== undefined) q.set(k, String(args[k]));
     }
+    if (Array.isArray(args.tag)) for (const t of args.tag) q.append("tag", String(t));
     if (args.unsubscribed !== undefined) q.set("unsubscribed", String(args.unsubscribed));
     return request("GET", `/v1/contacts?${q.toString()}`);
   },
@@ -199,8 +227,8 @@ export const tagContactTool = {
     "once; the response reports enrollments_ended.",
   schema: {
     contact_id: CONTACT_ID,
-    add: z.array(z.string()).optional(),
-    remove: z.array(z.string()).optional(),
+    add: z.array(z.string().min(1)).max(50).optional(),
+    remove: z.array(z.string().min(1)).max(50).optional(),
   },
   handler: async (args: Record<string, unknown>) => {
     const { contact_id, ...body } = args;

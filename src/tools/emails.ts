@@ -23,15 +23,36 @@ export const sendEmailTool = {
     request("POST", "/v1/emails", args),
 };
 
+const MESSAGE_STATUSES = [
+  "queued",
+  "scheduled",
+  "sent",
+  "delivered",
+  "bounced",
+  "complained",
+  "rejected",
+  "canceled",
+  "failed",
+] as const;
+
 export const listEmailsTool = {
   name: "list_emails",
   description:
-    "List recent messages with their delivery status. Filter by status " +
-    "(queued, scheduled, sent, delivered, bounced, complained, rejected) or recipient.",
+    "List messages newest first with their delivery status, including held, scheduled, skipped " +
+    "and failed ones and the mail campaigns and automations sent. Filter by status or recipient. " +
+    "Paged: at most 100 per call; while has_more is true, pass next_cursor back as cursor with " +
+    "the same filters. An unknown status is refused with 422 rather than answering an empty log.",
   schema: {
-    status: z.string().optional(),
+    status: z
+      .enum(MESSAGE_STATUSES)
+      .optional()
+      .describe(
+        "rejected: every recipient was suppressed or opted out, so nothing was sent. canceled: a " +
+          "scheduled send was cancelled. failed: the provider refused it, or a scheduled send could not go out",
+      ),
     to: z.string().optional().describe("Filter to one recipient address"),
-    limit: z.number().int().min(1).max(200).optional(),
+    limit: z.number().int().min(1).max(100).optional().describe("Page size, 1 to 100; defaults to 50"),
+    cursor: z.string().optional().describe("next_cursor from the previous page, passed back unchanged"),
   },
   handler: async (args: Record<string, unknown>) => {
     const qs = new URLSearchParams(
@@ -54,7 +75,9 @@ export const getEmailTool = {
 
 export const cancelEmailTool = {
   name: "cancel_scheduled_email",
-  description: "Cancel a scheduled email before it sends. Only works while status is 'scheduled'.",
+  description:
+    "Cancel a scheduled email before it sends. Only works while status is 'scheduled': a message " +
+    "that has already started sending, or is in any other state, answers 409 not_cancelable.",
   schema: { id: z.string() },
   handler: async (args: Record<string, unknown>) => request("DELETE", `/v1/emails/${args.id}`),
 };
