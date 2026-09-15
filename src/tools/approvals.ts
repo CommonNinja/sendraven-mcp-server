@@ -30,7 +30,9 @@ export const decideApprovalTool = {
     "not retry. 409 approval_in_progress means it is being released right now; check again in " +
     "a moment. A release the send path refuses (402 plan_limit_reached, 422 warmup_limit, 422 " +
     "no_verified_identity when its sending domain was removed) leaves the approval pending with " +
-    "that error, so it can be approved again once fixed.",
+    "that error, so it can be approved again once fixed. A held marketing message naming more " +
+    "than one recipient is refused with 422 invalid_request and stays pending: marketing mail " +
+    "carries each recipient's own unsubscribe link, so it can never be released; reject it.",
   schema: {
     id: z.string().describe("The approval's id from list_pending_approvals, not the message_id"),
     decision: z.enum(["approve", "reject"]),

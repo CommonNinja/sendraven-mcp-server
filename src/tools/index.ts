@@ -31,7 +31,16 @@ import {
 import { getThreadTool, listThreadsTool, markThreadHandledTool, replyToMessageTool } from "./threads";
 import { listTemplatesTool, renderTemplateTool, sendTemplateTool } from "./templates";
 import { decideApprovalTool, listApprovalsTool } from "./approvals";
-import { createAutomationTool, emitEventTool, enrollTool, listAutomationsTool, updateAutomationTool } from "./automations";
+import {
+  createAutomationTool,
+  getAutomationTool,
+  emitEventTool,
+  enrollTool,
+  listAutomationEnrollmentsTool,
+  listAutomationsTool,
+  setAutomationStatusTool,
+  updateAutomationTool,
+} from "./automations";
 import { getPreferencesTool, listTopicsTool, setPreferencesTool } from "./topics";
 import {
   addContactTool,
@@ -97,8 +106,11 @@ export const TOOLS: ToolDef[] = [
   listApprovalsTool,
   decideApprovalTool,
   listAutomationsTool,
+  getAutomationTool,
+  listAutomationEnrollmentsTool,
   createAutomationTool,
   updateAutomationTool,
+  setAutomationStatusTool,
   enrollTool,
   emitEventTool,
   listTopicsTool,

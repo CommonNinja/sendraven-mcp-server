@@ -6,7 +6,10 @@ export const listAutomationsTool = {
   description:
     "List multi-step email sequences and how many people are currently in each. Use this " +
     "to find the right automation before enrolling someone. Newest first, at most 100 per call; " +
-    "while has_more is true, pass next_cursor back as cursor.",
+    "while has_more is true, pass next_cursor back as cursor. A 'paused' automation holds its " +
+    "people on their current step rather than ending their sequence: they stay 'active' and " +
+    "continue from that step once it is active again. To see who is on one, or who left and why, " +
+    "use list_automation_enrollments.",
   schema: {
     limit: z.number().int().min(1).max(100).optional().describe("Page size, 1 to 100; defaults to 50"),
     cursor: z.string().optional().describe("next_cursor from the previous page, passed back unchanged"),
@@ -18,6 +21,39 @@ export const listAutomationsTool = {
     const q = qs.toString();
     return request("GET", `/v1/automations${q ? `?${q}` : ""}`);
   },
+};
+
+export const getAutomationTool = {
+  name: "get_automation",
+  description:
+    "Fetch one automation: its status, trigger, steps, exit rules and how many people are in each " +
+    "state. The same object list_automations returns, for when you already hold the id. People " +
+    "themselves are listed by list_automation_enrollments. An unknown automation_id answers 404 " +
+    "not_found; a name or slug passed instead is answered with the matching id.",
+  schema: {
+    automation_id: z.string().describe("The automation's id from list_automations (a UUID), not its name or slug"),
+  },
+  handler: async (args: Record<string, unknown>) => request("GET", `/v1/automations/${args.automation_id}`),
+};
+
+export const setAutomationStatusTool = {
+  name: "set_automation_status",
+  description:
+    "Activate, pause or return an automation to draft. A new automation is a draft and sends " +
+    "nothing until it is set to 'active'. Pausing ('paused' or 'draft') holds everyone on their " +
+    "current step: nobody is sent a step and nobody new is enrolled, but nobody's sequence ends, " +
+    "and setting 'active' again continues each person from where they were, with steps that came " +
+    "due meanwhile going out from the next worker run at the usual pace. So pause, rather than " +
+    "delete, to fix a step: a step's content is read when it is sent. Activating does not " +
+    "re-check the sending domain; if it is no longer verified each enrolment fails at its next " +
+    "step. Returns the automation. Only ask for this when a person wants the sequence started " +
+    "or stopped: activating starts mail to everyone it enrols.",
+  schema: {
+    automation_id: z.string().describe("The automation's id from list_automations (a UUID), not its name or slug"),
+    status: z.enum(["active", "paused", "draft"]),
+  },
+  handler: async (args: Record<string, unknown>) =>
+    request("POST", `/v1/automations/${args.automation_id}/status`, { status: args.status }),
 };
 
 export const enrollTool = {
@@ -37,7 +73,8 @@ export const enrollTool = {
     "another way in. reason suppressed, unsubscribed_from_topic, exit_tag or " +
     "required_tag_missing means they are deliberately excluded; do not work around it. Those " +
     "are all 200s. A 409 invalid_state means the automation cannot take anyone (not " +
-    "active, no steps, or its topic was deleted): tell a person rather than retrying. The calling " +
+    "active, no steps, or its topic was deleted): tell a person rather than retrying. A paused " +
+    "automation is not_active, but the people already in it are held, not dropped. The calling " +
     "key's guardrails apply: a key that holds its sends for approval cannot enrol anyone (403 " +
     "forbidden), because the steps later go out with no approval, and a key with a recipient " +
     "allowlist can enrol only addresses on it (403 recipient_not_allowed).",
@@ -110,7 +147,7 @@ export const createAutomationTool = {
   name: "create_automation",
   description:
     "Define a multi-step sequence as a draft; nothing is sent until it is activated, from the " +
-    "dashboard or with POST /v1/automations/{id}/status. Prefer this over scheduling several emails yourself: it ends on its own when the " +
+    "dashboard or with set_automation_status. Prefer this over scheduling several emails yourself: it ends on its own when the " +
     "person unsubscribes, replies, bounces, opts out of its topic, or their tags say so. " +
     "identity_id must be a marketing sending domain (see list_sending_domains; risk_class " +
     "'marketing') and from must sit on it; both are checked here rather than at the first send. " +
@@ -194,6 +231,38 @@ export const updateAutomationTool = {
   handler: async (args: Record<string, unknown>) => {
     const { automation_id, ...body } = args;
     return request("PATCH", `/v1/automations/${automation_id}`, body);
+  },
+};
+
+const ENROLLMENT_STATUSES = ["active", "completed", "canceled", "failed"] as const;
+
+export const listAutomationEnrollmentsTool = {
+  name: "list_automation_enrollments",
+  description:
+    "The people in one automation, newest enrolment first: each row has the email, status, " +
+    "current_step, next_due_at and, for a cancelled one, cancel_reason. Reach for this, not " +
+    "find_contact or list_emails, to answer 'is this person still on the sequence?', 'who is " +
+    "waiting on step 2?' or 'why did this sequence stop for them?'. status narrows to one state: " +
+    "'active' (still going, including people held while the automation is paused), 'completed', " +
+    "'failed', or 'canceled' for everyone who left early, where cancel_reason says why " +
+    "(unsubscribed, unsubscribed_from_topic, replied, suppressed, exit_tag, required_tag_missing, " +
+    "manual). For the counts alone, list_automations already carries them per status. Any other " +
+    "status is refused with 422 invalid_request, and an unknown automation_id answers 404 " +
+    "not_found. At most 100 per call; while has_more is true, pass next_cursor back as cursor " +
+    "with the same status.",
+  schema: {
+    automation_id: z.string().describe("The automation's id from list_automations (a UUID), not its name or slug"),
+    status: z.enum(ENROLLMENT_STATUSES).optional().describe("Only enrolments in this state; omit for all"),
+    limit: z.number().int().min(1).max(100).optional().describe("Page size, 1 to 100; defaults to 50"),
+    cursor: z.string().optional().describe("next_cursor from the previous page, passed back unchanged"),
+  },
+  handler: async (args: Record<string, unknown>) => {
+    const qs = new URLSearchParams();
+    if (args.status !== undefined) qs.set("status", String(args.status));
+    if (args.limit !== undefined) qs.set("limit", String(args.limit));
+    if (args.cursor !== undefined) qs.set("cursor", String(args.cursor));
+    const q = qs.toString();
+    return request("GET", `/v1/automations/${args.automation_id}/enrollments${q ? `?${q}` : ""}`);
   },
 };
 

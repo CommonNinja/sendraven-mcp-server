@@ -10,8 +10,9 @@ export const listBroadcastsTool = {
   name: "list_broadcasts",
   description:
     "List campaigns, newest first, with their status. Paged: at most 100 per call; while " +
-    "has_more is true, pass next_cursor back as cursor. List rows carry no html and progress is " +
-    "always null in them: use get_broadcast to read a campaign's html or how far it has got. " +
+    "has_more is true, pass next_cursor back as cursor. Each row is the campaign object " +
+    "get_broadcast returns, live progress and A/B results included, without its html: use " +
+    "get_broadcast only to read the html. " +
     "Every field is snake_case and always present, null when unset. A campaign showing " +
     "'paused' is not broken; read its pause_reason. A quota or interrupted pause continues on its " +
     "own. A warm-up pause is the sending domain's daily allowance protecting its reputation: it " +
@@ -41,6 +42,17 @@ const CAMPAIGN_KEY_GUARDRAILS =
   "(requires_approval) or has allowed_recipients gets 403 forbidden, because a campaign cannot " +
   "be held for approval or kept to an allowlist. Retrying will not help; a person sends it from " +
   "the dashboard, or uses a key without those guardrails.";
+
+/**
+ * A capped key pays once for each campaign it puts on its way, whoever
+ * scheduled it, so every tool that starts or continues one can hit it.
+ */
+const CAMPAIGN_DAILY_LIMIT =
+  " A key with a daily_send_limit is charged once for each campaign it puts on its way: sending " +
+  "or scheduling a draft counts its recipients, and starting a scheduled campaign now, moving it " +
+  "earlier, resuming it or deciding its winner counts what it still has to send, unless this key " +
+  "already paid for that campaign. When that does not fit what is left of the limit today the " +
+  "call answers 429 daily_limit and nothing changes; do not retry the same day.";
 
 const variantSchema = z.object({
   key: z
@@ -150,8 +162,12 @@ export const pickBroadcastWinnerTool = {
     "'testing' can be decided; anything else, or a campaign that is not an A/B test, answers " +
     "409 invalid_state. A variant key the campaign does not have answers 422 invalid_request. " +
     "Read get_broadcast first — a variant with a handful of opens more is not a result, and the " +
-    "worker decides on its own at decide_at. " +
-    CAMPAIGN_KEY_GUARDRAILS,
+    "worker decides on its own at decide_at. Returns the campaign object, as get_broadcast does, " +
+    "with the decision in ab_test (winner, decided_by, decided_at, results). If the worker decided " +
+    "first, ab_test.decided_by is 'auto', its winner stands and your variant was ignored; that is " +
+    "not an error, do not call again. " +
+    CAMPAIGN_KEY_GUARDRAILS +
+    CAMPAIGN_DAILY_LIMIT,
   schema: {
     id: BROADCAST_ID,
     variant: z.string().optional().describe("Variant key to send the remainder to; omit to let the metric decide"),
@@ -175,8 +191,10 @@ export const resumeBroadcastTool = {
     "protecting the domain. While the workspace has no postal address or is suspended the call " +
     "answers 422 no_postal_address or workspace_suspended: those need a person, and the campaign " +
     "continues on its own once they are fixed. An A/B test paused mid-sample resumes the sample; " +
-    "one paused after the decision resumes the winner. " +
-    CAMPAIGN_KEY_GUARDRAILS,
+    "one paused after the decision resumes the winner. Returns the campaign object, as " +
+    "get_broadcast does; progress.pending is how many addresses are still to send. " +
+    CAMPAIGN_KEY_GUARDRAILS +
+    CAMPAIGN_DAILY_LIMIT,
   schema: { id: BROADCAST_ID },
   handler: async (args: Record<string, unknown>) =>
     request("POST", `/v1/broadcasts/${args.id}/resume`),
@@ -190,15 +208,13 @@ export const sendBroadcastTool = {
     "Marketing mail must carry a postal address: a workspace without one is refused with 422 " +
     "no_postal_address (a person adds it in Settings), and a suspended workspace with 422 " +
     "workspace_suspended, whether sending now or scheduling. Calling this on an already-scheduled " +
-    "campaign with a new scheduled_at moves it (rescheduled: true); with no scheduled_at it starts " +
-    "now. Any other status answers 409 invalid_state, and a malformed scheduled_at 422 " +
-    "invalid_request. " +
+    "campaign with a new scheduled_at moves it; with no scheduled_at it starts now. Any other " +
+    "status answers 409 invalid_state, and a malformed scheduled_at 422 invalid_request. Returns " +
+    "the campaign object, as get_broadcast does: its status and scheduled_at are where the " +
+    "campaign now stands. " +
     CAMPAIGN_KEY_GUARDRAILS +
-    " A key with a daily_send_limit can start a draft (now or scheduled) only when the " +
-    "campaign's recipient count, as the audience resolves now, fits what is left of that limit " +
-    "today; otherwise it answers 429 daily_limit and nothing is sent. Those recipients then " +
-    "count against the key's limit. Run preview_broadcast to see the count, and do not retry " +
-    "the same day. The campaign's topic_key was checked against existing " +
+    CAMPAIGN_DAILY_LIMIT +
+    " Run preview_broadcast to see the count. The campaign's topic_key was checked against existing " +
     "topics when it was created. A campaign bigger than the day's remaining quota or its domain's " +
     "warm-up allowance is not rejected: it sends what it can and stops as 'paused', then " +
     "continues later. That is expected, not an error to retry. An A/B test sends its " +

@@ -7,6 +7,10 @@ import { withApiKey } from "./context";
 import { ApiError } from "./client";
 import { TOOLS } from "./tools";
 
+// dist/index.js sits one level below package.json, in the repo and in the npm tarball.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const PACKAGE_VERSION: string = require("../package.json").version;
+
 /**
  * A server instance for one caller.
  *
@@ -18,7 +22,9 @@ function buildServer(): McpServer {
   const server = new McpServer({
     name: "sendraven",
     title: "SendRaven",
-    version: "0.1.0",
+    // Read from the package, so the version a client sees is the one published.
+    // It was a literal "0.1.0" from the first release to 0.4.12.
+    version: PACKAGE_VERSION,
   });
 
   for (const tool of TOOLS) {

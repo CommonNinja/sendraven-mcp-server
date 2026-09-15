@@ -224,7 +224,9 @@ export const tagContactTool = {
     "audience they are on. Call list_tags first to see what the workspace already uses, rather " +
     "than inventing a synonym for an existing tag. Adding a tag an automation exits on (e.g. " +
     "customer), or removing one it requires (e.g. trial), ends the person's enrolment in it at " +
-    "once; the response reports enrollments_ended.",
+    "once. Returns the contact, as get_contact does, with its tags after the change. To see which " +
+    "enrolments a tag change ended, call list_automation_enrollments with status 'canceled' and " +
+    "read each row's cancel_reason (exit_tag or required_tag_missing).",
   schema: {
     contact_id: CONTACT_ID,
     add: z.array(z.string().min(1)).max(50).optional(),
