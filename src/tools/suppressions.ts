@@ -30,7 +30,8 @@ export const addSuppressionTool = {
     "default is 'all'. Reason 'unsubscribe' is a real opt-out: it also cancels the person's " +
     "queued scheduled sends and ends their automation enrolments, so use it when they asked to " +
     "stop, not 'manual'. A hard bounce or complaint already on file is never replaced; the " +
-    "response's reason says which one stands.",
+    "response is the stored suppression (id, email, reason, scope, detail, created_at), so its " +
+    "reason says which one stands.",
   schema: {
     email: z.string().email(),
     scope: z.enum(["all", "transactional", "marketing"]).optional().describe("Defaults to all"),

@@ -10,10 +10,10 @@ export const listBroadcastsTool = {
   name: "list_broadcasts",
   description:
     "List every campaign, newest first, with its status (not paged; each row carries its full " +
-    "html, and campaign fields are camelCase as stored). A campaign showing 'paused' is not " +
-    "broken; read its pauseReason. A quota or interrupted pause continues on its own. A warm-up " +
-    "pause is the sending domain's daily allowance protecting its reputation: it resumes on its " +
-    "own at resumeAfter and cannot be resumed before then. A pause for no postal address needs " +
+    "html). Every field is snake_case and always present, null when unset. A campaign showing " +
+    "'paused' is not broken; read its pause_reason. A quota or interrupted pause continues on its " +
+    "own. A warm-up pause is the sending domain's daily allowance protecting its reputation: it " +
+    "resumes on its own at resume_after and cannot be resumed before then. A pause for no postal address needs " +
     "a person to add one in Settings (the campaign then continues on its own), and one for a " +
     "suspended workspace needs sending restored and then resume_broadcast. One showing 'testing' " +
     "is an A/B test whose sample has gone out and whose winner is not yet decided. Use " +
@@ -109,7 +109,11 @@ export const getBroadcastTool = {
     "One campaign, with a 'progress' object while it is sending, paused or testing: how many " +
     "addresses are still pending, sent, failed, or skipped because the person opted out after " +
     "the campaign started. This is how you tell a paused campaign that is still making " +
-    "progress from one that is waiting; pauseReason says on what, and resumeAfter when a warm-up pause renews. An A/B test carries 'ab_test' with live per-variant " +
+    "progress from one that is waiting; pause_reason says on what, and resume_after when a " +
+    "warm-up pause renews. progress is null for a campaign not in flight. For an A/B test, " +
+    "progress.by_variant is a list of { key, pending, sent, failed, skipped } in variant order, " +
+    "ending with a row whose key is null: the addresses still waiting for the winner. An A/B " +
+    "test also carries 'ab_test' with live per-variant " +
     "results — sent, unique opens, unique clicks and their rates — plus 'decide_at' and, once " +
     "decided, 'winner' and 'decided_by'. Status 'testing' means the sample is out and the rest " +
     "of the audience is waiting on the decision.",
@@ -142,9 +146,9 @@ export const resumeBroadcastTool = {
     "Continue a paused campaign now. It mails only the addresses " +
     "still pending — the audience was frozen when the campaign started and everyone already " +
     "reached is marked — so calling this twice cannot double-send. Only works on a paused " +
-    "campaign; anything else answers 409. Read pauseReason first. A background worker resumes " +
+    "campaign; anything else answers 409. Read pause_reason first. A background worker resumes " +
     "quota and interrupted pauses on its own, so use this only when waiting is not acceptable. " +
-    "A warm-up pause cannot be resumed before its resumeAfter (409 naming the time) and resumes " +
+    "A warm-up pause cannot be resumed before its resume_after (409 naming the time) and resumes " +
     "on its own then; do not retry, the allowance is protecting the domain. While the workspace " +
     "has no postal address or is suspended the call answers 422 no_postal_address or " +
     "workspace_suspended: those need a person, and a suspension pause continues only through " +

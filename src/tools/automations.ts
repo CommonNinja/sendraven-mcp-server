@@ -29,7 +29,9 @@ export const enrollTool = {
     "required tags, which you would " +
     "otherwise have to track and cancel by hand. To stop a sequence for someone who converted, " +
     "tag the contact rather than cancelling anything. Enrolling the same person twice is a " +
-    "no-op, so it is safe to retry. enrolled: false with reason suppressed, " +
+    "no-op, so it is safe to retry. The answer always carries enrolled, reason and enrollment: " +
+    "enrolled: true with reason null and the enrollment, or enrolled: false with enrollment null. " +
+    "enrolled: false with reason already_enrolled is that no-op; with reason suppressed, " +
     "unsubscribed_from_topic, exit_tag or required_tag_missing means they are deliberately " +
     "excluded; do not work around it. A 409 means the automation cannot take anyone (not " +
     "active, no steps, or its topic was deleted): tell a person rather than retrying. The calling " +

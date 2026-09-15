@@ -17,7 +17,8 @@ export const decideApprovalTool = {
   description:
     "Approve or reject a held message. Approving releases it: it sends now, or at its " +
     "scheduled_at when the draft was scheduled for later. If every recipient unsubscribed or was " +
-    "suppressed while it waited, nothing is sent and the answer says skipped. Only use this when a " +
+    "suppressed while it waited, nothing is sent and the answer says skipped: true with a reason " +
+    "(both always present: false and null otherwise, beside scheduled_at). Only use this when a " +
     "human has explicitly told you which decision to make — the hold exists precisely so that " +
     "an agent is not the one deciding. The API enforces that: the key that drafted the message, " +
     "or any key that itself requires approval, gets 403 forbidden. An approval already decided " +

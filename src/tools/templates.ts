@@ -17,7 +17,8 @@ export const renderTemplateTool = {
   description:
     "Render a template with values, without sending. Use this to check your copy reads " +
     "correctly before mailing a real person. A missing variable answers 422 missing_variables " +
-    "with the list in `missing`; an unknown slug answers 404.",
+    "with the list in `missing`; an unknown slug answers 404. Returns subject, html and text; " +
+    "text is null when the template has no plain-text part.",
   schema: {
     slug: z.string(),
     variables: z.record(z.string()),
@@ -31,7 +32,8 @@ export const sendTemplateTool = {
   description:
     "Send an email built from a stored template. Variable values are HTML-escaped on " +
     "substitution, so they are safe to fill from user-supplied text. An unknown slug or a missing " +
-    "variable is refused with 422 and nothing is sent.",
+    "variable is refused with 422 and nothing is sent. The response has the same fields as " +
+    "send_email: id, status, thread_id, scheduled_at, skipped, reason and approval_id.",
   schema: {
     template: z.string().describe("Template slug"),
     variables: z.record(z.string()),

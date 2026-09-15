@@ -5,7 +5,12 @@ export const sendEmailTool = {
   name: "send_email",
   description:
     "Send a transactional email, immediately or scheduled. Use scheduled_at with a relative " +
-    "phrase like 'in 3 days' or an ISO timestamp. The From domain must already be verified.",
+    "phrase like 'in 3 days' or an ISO timestamp. The From domain must already be verified. " +
+    "Every accepted send answers with the same fields: id, status, thread_id, scheduled_at, " +
+    "skipped, reason and approval_id. skipped: true (status 'rejected', with reason) means every " +
+    "recipient was suppressed or opted out and nothing was sent; do not retry. status " +
+    "'pending_approval' (with approval_id) means a person must release it; do not retry. " +
+    "Otherwise skipped is false and reason and approval_id are null.",
   schema: {
     from: z.string().describe("Sender address on a verified domain, e.g. 'Team <team@mail.example.com>'"),
     to: z

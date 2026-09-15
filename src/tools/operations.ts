@@ -52,7 +52,8 @@ export const batchSuppressTool = {
 export const listWebhookEventsTool = {
   name: "list_webhook_deliveries",
   description:
-    "Recent delivery attempts for a webhook endpoint, with status codes and errors. This " +
+    "Recent delivery attempts for a webhook endpoint: each with event, status, attempts, " +
+    "last_status_code, last_error and delivered_at (null until it succeeds). This " +
     "is how to tell 'we never sent it' from 'your endpoint returned 500'. Newest first, the most " +
     "recent `limit` only; not paged.",
   schema: {
