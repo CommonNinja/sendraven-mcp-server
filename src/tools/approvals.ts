@@ -20,10 +20,17 @@ export const decideApprovalTool = {
     "suppressed while it waited, nothing is sent and the answer says skipped: true with a reason " +
     "(both always present: false and null otherwise, beside scheduled_at). Only use this when a " +
     "human has explicitly told you which decision to make — the hold exists precisely so that " +
-    "an agent is not the one deciding. The API enforces that: the key that drafted the message, " +
-    "or any key that itself requires approval, gets 403 forbidden. An approval already decided " +
-    "or expired answers 409. A release the send path refuses (plan allowance, warm-up limit) " +
-    "leaves the approval pending with that error.",
+    "an agent is not the one deciding. The API enforces that with 403 forbidden for: a client " +
+    "connected by signing in (an OAuth access token, which is how a remote MCP connection " +
+    "usually authenticates), the key that drafted the message, and any key with guardrails " +
+    "(requires_approval, allowed_recipients or a daily_send_limit). Approvals are decided by a " +
+    "person in the dashboard or by an API key without guardrails, so on a 403 tell the person to " +
+    "decide it in the dashboard; retrying or switching tools will not get past it. 409 " +
+    "invalid_state means it was already decided or has expired: read list_pending_approvals, do " +
+    "not retry. 409 approval_in_progress means it is being released right now; check again in " +
+    "a moment. A release the send path refuses (402 plan_limit_reached, 422 warmup_limit, 422 " +
+    "no_verified_identity when its sending domain was removed) leaves the approval pending with " +
+    "that error, so it can be approved again once fixed.",
   schema: {
     id: z.string().describe("The approval's id from list_pending_approvals, not the message_id"),
     decision: z.enum(["approve", "reject"]),

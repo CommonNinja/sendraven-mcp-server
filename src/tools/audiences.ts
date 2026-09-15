@@ -126,7 +126,7 @@ export const updateContactTool = {
     "unsubscribed: true is a real opt-out: it suppresses the address for marketing, cancels " +
     "their pending sends and ends their automation enrolments. unsubscribed: false lifts a " +
     "marketing unsubscribe — only do it when the person asked. Resubscribing someone who hard " +
-    "bounced or complained is refused with 409 before anything in the request is written.",
+    "bounced or complained is refused with 409 invalid_state before anything in the request is written.",
   schema: {
     id: CONTACT_ID,
     first_name: z.string().max(120).optional(),

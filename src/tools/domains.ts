@@ -24,10 +24,17 @@ export const addDomainTool = {
     "delivery. Pass risk_class only to provision one of the two on its own. Two records come " +
     "back marked optional: an inbound MX so replies land in threads, and a link. CNAME that " +
     "turns on click tracking on the customer's own name once its certificate is issued. " +
-    "Adding a domain that already exists returns it rather than a duplicate. A plan with no " +
-    "room for another domain answers 402 plan_limit; retrying will not help.",
+    "Adding a domain that already exists returns it rather than a duplicate. A public suffix " +
+    "such as co.uk or github.io is not a domain anyone can send from and is refused with 422 " +
+    "invalid_request; give the domain registered under it, e.g. example.co.uk. Passing " +
+    "mail.example.co.uk or news.example.co.uk is read as example.co.uk. A plan with no room " +
+    "for another domain answers 402 plan_limit_reached; retrying will not help, a person has " +
+    "to upgrade or remove a domain.",
   schema: {
-    domain: z.string().describe("The domain you send from, e.g. example.com"),
+    domain: z
+      .string()
+      .min(3)
+      .describe("The bare domain you send from, e.g. example.com: no scheme, path or @, and not a public suffix"),
     risk_class: z
       .enum(["transactional", "marketing"])
       .optional()

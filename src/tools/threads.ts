@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { request } from "../client";
+import { idempotencyHeader, request } from "../client";
+import { IDEMPOTENCY_KEY } from "./emails";
 
 export const listThreadsTool = {
   name: "list_threads",
@@ -43,13 +44,16 @@ export const replyToMessageTool = {
   description:
     "Reply to a message, keeping it on the same conversation. Sets the threading headers so " +
     "the recipient's mail client shows it as part of the existing exchange rather than a new " +
-    "one. Prefer this over send_email whenever you are answering something.",
+    "one. Prefer this over send_email whenever you are answering something. It is a send, so " +
+    "it answers exactly as send_email does and meets the same refusals (422 " +
+    "no_verified_identity, 429 daily_limit, 403 recipient_not_allowed, and so on); pass " +
+    "idempotency_key if you might retry.",
   schema: {
     reply_to_message_id: z
       .string()
       .describe(
         "Id of the message you are answering, sent or received: usually the inbound entry's id from " +
-          "get_thread. An id that matches no message in this workspace is refused with 422 rather " +
+          "get_thread. An id that matches no message in this workspace is refused with 422 invalid_request rather " +
           "than starting a new thread",
       ),
     from: z.string().describe("Sender address on a verified domain"),
@@ -57,8 +61,12 @@ export const replyToMessageTool = {
     subject: z.string(),
     text: z.string().optional(),
     html: z.string().optional(),
+    idempotency_key: IDEMPOTENCY_KEY,
   },
-  handler: async (args: Record<string, unknown>) => request("POST", "/v1/emails", args),
+  handler: async (args: Record<string, unknown>) => {
+    const { idempotency_key, ...body } = args;
+    return request("POST", "/v1/emails", body, idempotencyHeader(idempotency_key));
+  },
 };
 
 export const markThreadHandledTool = {

@@ -34,14 +34,28 @@ function buildServer(): McpServer {
         } catch (e) {
           // Surface the API's own message rather than a stack trace — an agent
           // can usually act on "domain not verified" but not on a bare 403.
-          const message =
-            e instanceof ApiError ? `${e.message} (HTTP ${e.status})` : (e as Error).message;
+          // The type goes with it, because the tool descriptions say what to do
+          // per type, and so does `missing`: the variable names are the fix.
+          const message = e instanceof ApiError ? describeApiError(e) : (e as Error).message;
           return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
         }
       },
     );
   }
   return server;
+}
+
+/** "Template is missing values for: name (HTTP 422 missing_variables; missing: name)". */
+function describeApiError(e: ApiError): string {
+  const parts = [`HTTP ${e.status}${e.type ? ` ${e.type}` : ""}`];
+  if (e.extra.missing?.length) parts.push(`missing: ${e.extra.missing.join(", ")}`);
+  if (Array.isArray(e.extra.details) && e.extra.details.length) {
+    const issues = (e.extra.details as { path?: unknown[]; message?: string }[])
+      .slice(0, 10)
+      .map((d) => `${Array.isArray(d.path) && d.path.length ? `${d.path.join(".")}: ` : ""}${d.message ?? ""}`);
+    parts.push(`details: ${issues.join("; ")}`);
+  }
+  return `${e.message} (${parts.join("; ")})`;
 }
 
 /* ---------------------------------------------------------------- stdio --- */

@@ -9,18 +9,38 @@ const BROADCAST_ID = z
 export const listBroadcastsTool = {
   name: "list_broadcasts",
   description:
-    "List every campaign, newest first, with its status (not paged; each row carries its full " +
-    "html). Every field is snake_case and always present, null when unset. A campaign showing " +
+    "List campaigns, newest first, with their status. Paged: at most 100 per call; while " +
+    "has_more is true, pass next_cursor back as cursor. List rows carry no html and progress is " +
+    "always null in them: use get_broadcast to read a campaign's html or how far it has got. " +
+    "Every field is snake_case and always present, null when unset. A campaign showing " +
     "'paused' is not broken; read its pause_reason. A quota or interrupted pause continues on its " +
     "own. A warm-up pause is the sending domain's daily allowance protecting its reputation: it " +
-    "resumes on its own at resume_after and cannot be resumed before then. A pause for no postal address needs " +
-    "a person to add one in Settings (the campaign then continues on its own), and one for a " +
-    "suspended workspace needs sending restored and then resume_broadcast. One showing 'testing' " +
-    "is an A/B test whose sample has gone out and whose winner is not yet decided. Use " +
-    "get_broadcast to see how much is left or how each variant is doing.",
-  schema: {},
-  handler: async () => request("GET", "/v1/broadcasts"),
+    "resumes on its own at resume_after and cannot be resumed before then. A pause for no postal " +
+    "address needs a person to add one in Settings, and one for a suspended workspace needs " +
+    "sending restored; either way the campaign then continues on its own. One showing 'testing' " +
+    "is an A/B test whose sample has gone out and whose winner is not yet decided.",
+  schema: {
+    limit: z.number().int().min(1).max(100).optional().describe("Page size, 1 to 100; defaults to 50"),
+    cursor: z.string().optional().describe("next_cursor from the previous page, passed back unchanged"),
+  },
+  handler: async (args: Record<string, unknown>) => {
+    const qs = new URLSearchParams();
+    if (args.limit !== undefined) qs.set("limit", String(args.limit));
+    if (args.cursor !== undefined) qs.set("cursor", String(args.cursor));
+    const q = qs.toString();
+    return request("GET", `/v1/broadcasts${q ? `?${q}` : ""}`);
+  },
 };
+
+/**
+ * What the calling key's guardrails do to a campaign. An audience cannot be
+ * held for approval or held to an allowlist, so those keys cannot start one.
+ */
+const CAMPAIGN_KEY_GUARDRAILS =
+  "The calling API key's guardrails apply: a key that holds its sends for approval " +
+  "(requires_approval) or has allowed_recipients gets 403 forbidden, because a campaign cannot " +
+  "be held for approval or kept to an allowlist. Retrying will not help; a person sends it from " +
+  "the dashboard, or uses a key without those guardrails.";
 
 const variantSchema = z.object({
   key: z
@@ -127,9 +147,11 @@ export const pickBroadcastWinnerTool = {
     "Decide an A/B test now instead of waiting for decide_at. Pass 'variant' to choose a key " +
     "yourself, or omit it to have the metric decide on the figures so far. The rest of the " +
     "audience is then sent to the winner and cannot be redirected. Only a campaign in status " +
-    "'testing' can be decided; anything else answers 409. Read get_broadcast first — a " +
-    "variant with a handful of opens more is not a result, and the worker decides on its own " +
-    "at decide_at.",
+    "'testing' can be decided; anything else, or a campaign that is not an A/B test, answers " +
+    "409 invalid_state. A variant key the campaign does not have answers 422 invalid_request. " +
+    "Read get_broadcast first — a variant with a handful of opens more is not a result, and the " +
+    "worker decides on its own at decide_at. " +
+    CAMPAIGN_KEY_GUARDRAILS,
   schema: {
     id: BROADCAST_ID,
     variant: z.string().optional().describe("Variant key to send the remainder to; omit to let the metric decide"),
@@ -146,14 +168,15 @@ export const resumeBroadcastTool = {
     "Continue a paused campaign now. It mails only the addresses " +
     "still pending — the audience was frozen when the campaign started and everyone already " +
     "reached is marked — so calling this twice cannot double-send. Only works on a paused " +
-    "campaign; anything else answers 409. Read pause_reason first. A background worker resumes " +
-    "quota and interrupted pauses on its own, so use this only when waiting is not acceptable. " +
-    "A warm-up pause cannot be resumed before its resume_after (409 naming the time) and resumes " +
-    "on its own then; do not retry, the allowance is protecting the domain. While the workspace " +
-    "has no postal address or is suspended the call answers 422 no_postal_address or " +
-    "workspace_suspended: those need a person, and a suspension pause continues only through " +
-    "this call once sending is restored. An A/B test paused mid-sample resumes the sample; one " +
-    "paused after the decision resumes the winner.",
+    "campaign; anything else answers 409 invalid_state. Read pause_reason first. A background " +
+    "worker resumes quota, interrupted and suspension pauses on its own, so use this only when " +
+    "waiting is not acceptable. A warm-up pause cannot be resumed before its resume_after (409 " +
+    "invalid_state naming the time) and resumes on its own then; do not retry, the allowance is " +
+    "protecting the domain. While the workspace has no postal address or is suspended the call " +
+    "answers 422 no_postal_address or workspace_suspended: those need a person, and the campaign " +
+    "continues on its own once they are fixed. An A/B test paused mid-sample resumes the sample; " +
+    "one paused after the decision resumes the winner. " +
+    CAMPAIGN_KEY_GUARDRAILS,
   schema: { id: BROADCAST_ID },
   handler: async (args: Record<string, unknown>) =>
     request("POST", `/v1/broadcasts/${args.id}/resume`),
@@ -168,7 +191,14 @@ export const sendBroadcastTool = {
     "no_postal_address (a person adds it in Settings), and a suspended workspace with 422 " +
     "workspace_suspended, whether sending now or scheduling. Calling this on an already-scheduled " +
     "campaign with a new scheduled_at moves it (rescheduled: true); with no scheduled_at it starts " +
-    "now. Any other status answers 409. The campaign's topic_key was checked against existing " +
+    "now. Any other status answers 409 invalid_state, and a malformed scheduled_at 422 " +
+    "invalid_request. " +
+    CAMPAIGN_KEY_GUARDRAILS +
+    " A key with a daily_send_limit can start a draft (now or scheduled) only when the " +
+    "campaign's recipient count, as the audience resolves now, fits what is left of that limit " +
+    "today; otherwise it answers 429 daily_limit and nothing is sent. Those recipients then " +
+    "count against the key's limit. Run preview_broadcast to see the count, and do not retry " +
+    "the same day. The campaign's topic_key was checked against existing " +
     "topics when it was created. A campaign bigger than the day's remaining quota or its domain's " +
     "warm-up allowance is not rejected: it sends what it can and stops as 'paused', then " +
     "continues later. That is expected, not an error to retry. An A/B test sends its " +

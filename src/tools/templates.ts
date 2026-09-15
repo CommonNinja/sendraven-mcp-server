@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { request } from "../client";
+import { idempotencyHeader, request } from "../client";
+import { IDEMPOTENCY_KEY, SEND_ERRORS } from "./emails";
 
 export const listTemplatesTool = {
   name: "list_templates",
@@ -31,9 +32,12 @@ export const sendTemplateTool = {
   name: "send_template_email",
   description:
     "Send an email built from a stored template. Variable values are HTML-escaped on " +
-    "substitution, so they are safe to fill from user-supplied text. An unknown slug or a missing " +
-    "variable is refused with 422 and nothing is sent. The response has the same fields as " +
-    "send_email: id, status, thread_id, scheduled_at, skipped, reason and approval_id.",
+    "substitution, so they are safe to fill from user-supplied text. Nothing is sent when a " +
+    "value is missing: 422 missing_variables lists the names in `missing`, so fill those and " +
+    "call again (render_template checks this without sending). An unknown slug answers 422 " +
+    "invalid_request. The response has the same fields as send_email: id, status, thread_id, " +
+    "scheduled_at, skipped, reason and approval_id. " +
+    SEND_ERRORS,
   schema: {
     template: z.string().describe("Template slug"),
     variables: z.record(z.string()),
@@ -41,6 +45,10 @@ export const sendTemplateTool = {
     to: z.string().describe("Recipient address, or 'Name <address>' to show their name"),
     subject: z.string().optional().describe("Overrides the template's subject"),
     scheduled_at: z.string().optional(),
+    idempotency_key: IDEMPOTENCY_KEY,
   },
-  handler: async (args: Record<string, unknown>) => request("POST", "/v1/emails", args),
+  handler: async (args: Record<string, unknown>) => {
+    const { idempotency_key, ...body } = args;
+    return request("POST", "/v1/emails", body, idempotencyHeader(idempotency_key));
+  },
 };
