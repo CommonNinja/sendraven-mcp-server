@@ -8,7 +8,12 @@ export const sendEmailTool = {
     "phrase like 'in 3 days' or an ISO timestamp. The From domain must already be verified.",
   schema: {
     from: z.string().describe("Sender address on a verified domain, e.g. 'Team <team@mail.example.com>'"),
-    to: z.string().email().describe("Recipient address"),
+    to: z
+      .string()
+      .describe(
+        "Recipient address, or 'Ana Lima <ana@example.com>' to show their name in the To line. " +
+          "Suppressions and opt-outs match the address either way",
+      ),
     subject: z.string(),
     html: z.string().optional().describe("HTML body; provide html, text, or both"),
     text: z.string().optional(),

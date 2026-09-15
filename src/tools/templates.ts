@@ -33,7 +33,7 @@ export const sendTemplateTool = {
     template: z.string().describe("Template slug"),
     variables: z.record(z.string()),
     from: z.string(),
-    to: z.string().email(),
+    to: z.string().describe("Recipient address, or 'Name <address>' to show their name"),
     subject: z.string().optional().describe("Overrides the template's subject"),
     scheduled_at: z.string().optional(),
   },

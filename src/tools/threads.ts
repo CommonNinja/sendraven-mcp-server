@@ -41,7 +41,7 @@ export const replyToMessageTool = {
   schema: {
     reply_to_message_id: z.string().describe("Id of the message being replied to"),
     from: z.string().describe("Sender address on a verified domain"),
-    to: z.string().email(),
+    to: z.string().describe("Recipient address, or 'Name <address>' to show their name"),
     subject: z.string(),
     text: z.string().optional(),
     html: z.string().optional(),
