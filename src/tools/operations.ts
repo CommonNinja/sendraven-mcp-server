@@ -81,14 +81,6 @@ export const broadcastRecipientsTool = {
   },
 };
 
-export const listApiKeysTool = {
-  name: "list_api_keys",
-  description:
-    "List this workspace's API keys with their scopes and limits. Never returns key values.",
-  schema: {},
-  handler: async () => request("GET", "/v1/api-keys"),
-};
-
 export const getUsageTool = {
   name: "get_usage",
   description:

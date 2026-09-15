@@ -50,7 +50,6 @@ import {
 import {
   batchSuppressTool,
   broadcastRecipientsTool,
-  listApiKeysTool,
   getUsageTool,
   listScheduledTool,
   listWebhookEventsTool,
@@ -118,7 +117,6 @@ export const TOOLS: ToolDef[] = [
   batchSuppressTool,
   listWebhookEventsTool,
   broadcastRecipientsTool,
-  listApiKeysTool,
   getUsageTool,
   findContactTool,
   removeFromAudienceTool,

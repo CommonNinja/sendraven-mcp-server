@@ -82,7 +82,7 @@ hold. The tools respect all three. See
 ## Tools
 
 <!-- tools:start -->
-53 tools, generated from the server's registry.
+52 tools, generated from the server's registry.
 
 | Tool | What it does |
 | --- | --- |
@@ -133,7 +133,6 @@ hold. The tools respect all three. See
 | `suppress_many` | Stop sending to many addresses at once — the path for importing another provider's unsubscribe list before a first campaign. Without it, everyone who already opted out there gets mailed again here. Note the defaults differ from add_suppression: scope 'marketing' and reason 'list_hygiene'. Pass reason 'unsubscribe' for a list of opt-outs; that also cancels their queued scheduled sends and ends their automation enrolments. Addresses are de-duplicated; the response counts suppressed and duplicates. |
 | `list_webhook_deliveries` | Recent delivery attempts for a webhook endpoint, with status codes and errors. This is how to tell 'we never sent it' from 'your endpoint returned 500'. Newest first, the most recent `limit` only; not paged. |
 | `list_broadcast_recipients` | Who a campaign reached and what happened to each message, with the A/B variant when there is one. At most 200 per call; while has_more is true, pass next_cursor (a message id) back as cursor. |
-| `list_api_keys` | List this workspace's API keys with their scopes and limits. Never returns key values. |
 | `get_usage` | This workspace's plan, how many emails it has sent this month, and how many are left. Check before a large batch: a send that would cross the included allowance on a plan without overage is refused whole, so it is better to know first than to discover it halfway through a campaign. |
 | `find_contact` | Find a contact by address across every audience, without knowing which list they are on, or list the workspace's contacts by tag or subscription. Use email for an exact match, or q for an address prefix. A person exists once per workspace, so each row is one contact with audience_ids listing every list they are on, first_name, last_name, tags, attributes and whether they are unsubscribed. Newest first, at most 100 per call; while has_more is true, pass next_cursor back as cursor with the same filters. |
 | `remove_from_audience` | Take a contact off one audience. They stay in the workspace and keep every other audience, their suppression and their engagement history. To remove the person entirely use delete_contact — leaving a list and being forgotten are different things. |
