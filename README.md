@@ -4,10 +4,10 @@ The [SendRaven](https://sendraven.ai) MCP server. Send email, read replies as
 threads, run campaigns and automations, and decide approvals, from any client
 that speaks the Model Context Protocol.
 
-SendRaven is email infrastructure for AI agents: one API for transactional
-mail, campaigns, automations and inbound, priced per email sent and never per
-contact, with limits that live on the API key so an agent can run it and a
-person can stop it.
+SendRaven is email infrastructure for AI agents. Agents use it over REST or MCP
+to run real email conversations: sending, reading replies as threads, and
+running campaigns and automations, within limits and approvals set on the API
+key. It is priced per email sent, never per contact.
 
 ## Install
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
   "name": "ai.sendraven/mcp",
-  "description": "Email for AI agents: send, read replies as threads, run campaigns, with per-key limits.",
+  "description": "Email infrastructure for AI agents: send, read replies as threads, campaigns, per-key limits.",
   "repository": {
     "url": "https://github.com/CommonNinja/sendraven-mcp-server",
     "source": "github"
