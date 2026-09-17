@@ -53,6 +53,14 @@ const contactFields = {
     "Standing with the previous sender. unsubscribed suppresses for marketing; bounced and " +
       "complained suppress for everything. Defaults to subscribed.",
   ),
+  last_active_at: z
+    .string()
+    .datetime({ offset: true })
+    .optional()
+    .describe(
+      "ISO 8601 time the person was last active in your product (a login, a session). Counted by a " +
+        "segment's engaged_within_days. Kept only if later than the stored value.",
+    ),
 };
 
 export const addContactTool = {
@@ -133,6 +141,12 @@ export const updateContactTool = {
     last_name: z.string().max(120).optional(),
     unsubscribed: z.boolean().optional().describe("true to opt them out of marketing, false to undo an unsubscribe"),
     attributes: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
+    last_active_at: z
+      .string()
+      .datetime({ offset: true })
+      .nullable()
+      .optional()
+      .describe("ISO 8601 time of their last activity in your product. Only moves forward; null clears it."),
   },
   handler: async (args: Record<string, unknown>) => {
     const { id, ...body } = args;

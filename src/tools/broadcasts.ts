@@ -101,7 +101,23 @@ export const createBroadcastTool = {
       .object({
         opened_within_days: z.number().int().min(1).max(3650).optional(),
         clicked_within_days: z.number().int().min(1).max(3650).optional(),
-        exclude_unengaged_days: z.number().int().min(1).max(3650).optional(),
+        exclude_unengaged_days: z
+          .number()
+          .int()
+          .min(1)
+          .max(3650)
+          .optional()
+          .describe("Drops mailed contacts with no open or click in N days; keeps anyone never mailed or added in the window"),
+        engaged_within_days: z
+          .number()
+          .int()
+          .min(1)
+          .max(3650)
+          .optional()
+          .describe(
+            "Only contacts who opened, clicked or were active in your product (last_active_at) in N days. " +
+              "Use this, not exclude_unengaged_days, on a freshly imported list: that one keeps everyone new.",
+          ),
       })
       .optional(),
     variants: z.array(variantSchema).min(2).max(10).optional(),
