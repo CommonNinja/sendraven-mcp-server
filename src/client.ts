@@ -49,6 +49,9 @@ export async function request<T>(
     method,
     headers: {
       Authorization: `Bearer ${apiKey()}`,
+      // Lets the API tell a call made through MCP from the same key used by a
+      // backend. It only feeds the activation funnel; it grants nothing.
+      "X-SendRaven-Client": "mcp",
       ...(body ? { "Content-Type": "application/json" } : {}),
       ...headers,
     },
