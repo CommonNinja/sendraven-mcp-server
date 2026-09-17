@@ -61,6 +61,14 @@ export const replyToMessageTool = {
     subject: z.string(),
     text: z.string().optional(),
     html: z.string().optional(),
+    scheduled_at: z
+      .string()
+      .optional()
+      .describe(
+        "Send the reply later, still on this thread: 'in 3 days' or an ISO 8601 timestamp. Answers " +
+          "status 'scheduled' with the message id; cancel_scheduled_email with that id stops it, which " +
+          "is how a follow-up is withdrawn when the person answers first",
+      ),
     idempotency_key: IDEMPOTENCY_KEY,
   },
   handler: async (args: Record<string, unknown>) => {
