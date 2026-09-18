@@ -85,10 +85,15 @@ export const broadcastRecipientsTool = {
 export const getUsageTool = {
   name: "get_usage",
   description:
-    "This workspace's plan, how many emails it has sent this month, and how many are " +
-    "left. Check before a large batch: a send that would cross the included allowance " +
-    "on a plan without overage is refused whole (402 plan_limit_reached), so it is better to know first than to " +
-    "discover it halfway through a campaign.",
+    "This workspace's plan, what it has sent this billing period, what the period costs so far, " +
+    "and — the fields worth branching on — sending_locked and lock_reason, which name the exact " +
+    "402 a send would be refused with right now. Check it before a large batch or campaign: on " +
+    "Free a send that would cross the 3,000 included emails is refused whole, and a workspace " +
+    "with no verified payment method cannot send at all, on any plan. lock_reason " +
+    "payment_method_required is the one no tool can fix — say so and stop, because only a person " +
+    "can add a payment method in the dashboard. Pricing is one meter, outbound emails sent: " +
+    "contacts and inbound replies are never counted, and estimated_cents is what the period " +
+    "costs on exactly the curve the invoice uses.",
   schema: {},
   handler: async () => request("GET", "/v1/usage"),
 };

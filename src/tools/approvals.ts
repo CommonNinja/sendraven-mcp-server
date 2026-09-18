@@ -28,7 +28,8 @@ export const decideApprovalTool = {
     "decide it in the dashboard; retrying or switching tools will not get past it. 409 " +
     "invalid_state means it was already decided or has expired: read list_pending_approvals, do " +
     "not retry. 409 approval_in_progress means it is being released right now; check again in " +
-    "a moment. A release the send path refuses (402 plan_limit_reached, 422 warmup_limit, 422 " +
+    "a moment. A release the send path refuses (402 plan_limit_reached or another 402 billing " +
+    "refusal, 422 warmup_limit, 422 " +
     "no_verified_identity when its sending domain was removed) leaves the approval pending with " +
     "that error, so it can be approved again once fixed. A held marketing message naming more " +
     "than one recipient is refused with 422 invalid_request and stays pending: marketing mail " +

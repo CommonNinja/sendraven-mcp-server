@@ -27,10 +27,16 @@ export const SEND_ERRORS =
   "add and verify it, retrying will not help); 422 invalid_request (a bad field, or more than " +
   "50 recipients across to, cc and bcc: split it into separate messages or use a campaign); " +
   "422 unknown_topic; 422 invalid_schedule; 403 recipient_not_allowed (this key's allowlist); " +
-  "429 daily_limit (this key's daily cap; wait for tomorrow, do not retry now); 402 " +
-  "plan_limit_reached (the plan's monthly allowance; a person has to upgrade); 422 " +
+  "429 daily_limit (this key's daily cap; wait for tomorrow, do not retry now); four billing " +
+  "refusals, all 402 and none retryable — plan_limit_reached (the Free plan's 3,000 emails a " +
+  "month are spent; a person has to activate paid sending), payment_method_required (the " +
+  "workspace has never had a payment method verified, so no outbound email leaves it at all, " +
+  "including on Free; only a person can add one in the dashboard), billing_past_due (the " +
+  "payment failed for good) and budget_exceeded (the workspace's own spend ceiling; by default " +
+  "it stops marketing and lets transactional through); 422 " +
   "workspace_suspended and 422 no_postal_address (a person has to act). 502 ses_error is the " +
-  "provider; retrying later with the same idempotency_key is safe.";
+  "provider; retrying later with the same idempotency_key is safe. Call get_usage to see which " +
+  "of these applies before sending, and stop rather than looping on any of them.";
 
 export const sendEmailTool = {
   name: "send_email",
