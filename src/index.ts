@@ -6,6 +6,7 @@ import express, { type Request, type Response } from "express";
 import { withApiKey } from "./context";
 import { ApiError } from "./client";
 import { TOOLS } from "./tools";
+import { annotationsFor } from "./tools/annotations";
 
 // dist/index.js sits one level below package.json, in the repo and in the npm tarball.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -33,6 +34,7 @@ function buildServer(): McpServer {
       tool.description,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tool.schema as any,
+      annotationsFor(tool.name),
       async (args: Record<string, unknown>) => {
         try {
           const result = await tool.handler(args);
