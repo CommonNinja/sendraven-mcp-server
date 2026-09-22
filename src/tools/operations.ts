@@ -90,8 +90,8 @@ export const getUsageTool = {
     "402 a send would be refused with right now. Check it before a large batch or campaign: on " +
     "Free a send that would cross the 3,000 included emails is refused whole, and a workspace " +
     "with no verified payment method cannot send at all, on any plan. lock_reason " +
-    "payment_method_required is the one no tool can fix — say so and stop, because only a person " +
-    "can add a payment method in the dashboard. Pricing is one meter, outbound emails sent: " +
+    "payment_method_required is the one no tool can fix: only a person can add a payment method, " +
+    "in the dashboard. Pricing is one meter, outbound emails sent: " +
     "contacts and inbound replies are never counted, and estimated_cents is what the period " +
     "costs on exactly the curve the invoice uses.",
   schema: {},

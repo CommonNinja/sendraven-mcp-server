@@ -24,8 +24,8 @@ export const decideApprovalTool = {
     "connected by signing in (an OAuth access token, which is how a remote MCP connection " +
     "usually authenticates), the key that drafted the message, and any key with guardrails " +
     "(requires_approval, allowed_recipients or a daily_send_limit). Approvals are decided by a " +
-    "person in the dashboard or by an API key without guardrails, so on a 403 tell the person to " +
-    "decide it in the dashboard; retrying or switching tools will not get past it. 409 " +
+    "person in the dashboard or by an API key without guardrails, so after a 403 the decision " +
+    "can only be made in the dashboard; retrying or switching tools does not get past it. 409 " +
     "invalid_state means it was already decided or has expired: read list_pending_approvals, do " +
     "not retry. 409 approval_in_progress means it is being released right now; check again in " +
     "a moment. A release the send path refuses (402 plan_limit_reached or another 402 billing " +
