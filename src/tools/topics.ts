@@ -5,8 +5,8 @@ export const listTopicsTool = {
   name: "list_topics",
   description:
     "List subscription topics — the categories a person can opt out of individually. " +
-    "Pass a topic when sending marketing mail so recipients can unsubscribe from that " +
-    "kind alone rather than from everything.",
+    "Marketing mail sent under a topic lets recipients unsubscribe from that kind alone " +
+    "rather than from everything.",
   schema: {},
   handler: async () => request("GET", "/v1/topics"),
 };
@@ -14,8 +14,8 @@ export const listTopicsTool = {
 export const getPreferencesTool = {
   name: "get_email_preferences",
   description:
-    "What one person has chosen to receive. Check this before asking a human why someone " +
-    "isn't getting a particular kind of email — an opt-out looks identical to a delivery " +
+    "What one person has chosen to receive. It shows whether someone who isn't getting a " +
+    "particular kind of email opted out of it — an opt-out looks identical to a delivery " +
     "failure from the outside.",
   schema: { email: z.string().email() },
   handler: async (args: Record<string, unknown>) =>
@@ -25,8 +25,7 @@ export const getPreferencesTool = {
 export const setPreferencesTool = {
   name: "set_email_preferences",
   description:
-    "Set which topics a person receives. Only do this when they have actually asked — " +
-    "silently re-subscribing someone who opted out is what generates spam complaints. Every " +
+    "Set which topics a person receives, recording what they asked for — silently re-subscribing someone who opted out is what generates spam complaints. Every " +
     "key must be an existing topic from list_topics: one unknown key refuses the whole call " +
     "with 422 unknown_topic and nothing is saved. Setting a topic to false also ends any " +
     "automation enrolment sent under that topic.",

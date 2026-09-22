@@ -15,9 +15,9 @@ export const metricsTool = {
 export const listScheduledTool = {
   name: "list_scheduled_emails",
   description:
-    "Messages queued to send later but not yet sent, newest first. Cancel one with " +
-    "cancel_scheduled_email. At most 100 per call; while has_more is true, pass next_cursor back " +
-    "as cursor.",
+    "Messages queued to send later but not yet sent, newest first; cancel_scheduled_email " +
+    "cancels one. At most 100 per call; while has_more is true, next_cursor passed back as " +
+    "cursor returns the next page.",
   schema: {
     limit: z.number().int().min(1).max(100).optional().describe("Page size, 1 to 100; defaults to 50"),
     cursor: z.string().optional().describe("next_cursor from the previous page, passed back unchanged"),
@@ -34,9 +34,9 @@ export const batchSuppressTool = {
   description:
     "Stop sending to many addresses at once — the path for importing another provider's " +
     "unsubscribe list before a first campaign. Without it, everyone who already opted out " +
-    "there gets mailed again here. Note the defaults differ from add_suppression: scope " +
-    "'marketing' and reason 'list_hygiene'. Pass reason 'unsubscribe' for a list of opt-outs; " +
-    "that also cancels their queued scheduled sends and ends their automation enrolments. " +
+    "there gets mailed again here. The defaults differ from add_suppression: scope " +
+    "'marketing' and reason 'list_hygiene'. reason 'unsubscribe' marks a list of opt-outs, and " +
+    "also cancels their queued scheduled sends and ends their automation enrolments. " +
     "Addresses are de-duplicated; the response counts suppressed and duplicates.",
   schema: {
     emails: z.array(z.string().email()).min(1).max(10000),
@@ -54,7 +54,7 @@ export const listWebhookEventsTool = {
   description:
     "Recent delivery attempts for a webhook endpoint: each with event, status, attempts, " +
     "last_status_code, last_error and delivered_at (null until it succeeds). This " +
-    "is how to tell 'we never sent it' from 'your endpoint returned 500'. Newest first, the most " +
+    "is what tells 'we never sent it' from 'your endpoint returned 500'. Newest first, the most " +
     "recent `limit` only; not paged.",
   schema: {
     endpoint_id: z.string(),
@@ -68,8 +68,8 @@ export const broadcastRecipientsTool = {
   name: "list_broadcast_recipients",
   description:
     "Who a campaign reached and what happened to each message, with the A/B variant when there " +
-    "is one. At most 200 per call; while has_more is true, pass next_cursor (a message id) back " +
-    "as cursor.",
+    "is one. At most 200 per call; while has_more is true, next_cursor (a message id) passed " +
+    "back as cursor returns the next page.",
   schema: {
     id: z.string().describe("The campaign's id from create_broadcast or list_broadcasts (a UUID), not its name"),
     limit: z.number().int().min(1).max(200).optional().describe("Page size, 1 to 200; defaults to 200"),
@@ -87,7 +87,7 @@ export const getUsageTool = {
   description:
     "This workspace's plan, what it has sent this billing period, what the period costs so far, " +
     "and — the fields worth branching on — sending_locked and lock_reason, which name the exact " +
-    "402 a send would be refused with right now. Check it before a large batch or campaign: on " +
+    "402 a send would be refused with right now, before a large batch or campaign is tried: on " +
     "Free a send that would cross the 3,000 included emails is refused whole, and a workspace " +
     "with no verified payment method cannot send at all, on any plan. lock_reason " +
     "payment_method_required is the one no tool can fix: only a person can add a payment method, " +

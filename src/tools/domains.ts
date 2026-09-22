@@ -18,27 +18,27 @@ export const listDomainsTool = {
 export const addDomainTool = {
   name: "add_sending_domain",
   description:
-    "Register a sending domain and get back the DNS records to publish. Give the domain you " +
-    "send from — mail.<domain> and news.<domain> are provisioned beneath it and the right one " +
+    "Register a sending domain and get back the DNS records to publish. It takes the domain " +
+    "mail is sent from — mail.<domain> and news.<domain> are provisioned beneath it and the right one " +
     "is chosen per message, so a marketing complaint spike can never affect password reset " +
-    "delivery. Pass risk_class only to provision one of the two on its own. Two records come " +
+    "delivery. risk_class provisions one of the two on its own. Two records come " +
     "back marked optional: an inbound MX so replies land in threads, and a link. CNAME that " +
     "turns on click tracking on the customer's own name once its certificate is issued. " +
     "Adding a domain that already exists returns it rather than a duplicate. A public suffix " +
     "such as co.uk or github.io is not a domain anyone can send from and is refused with 422 " +
-    "invalid_request; give the domain registered under it, e.g. example.co.uk. Passing " +
+    "invalid_request; the domain registered under it, e.g. example.co.uk, is accepted. Passing " +
     "mail.example.co.uk or news.example.co.uk is read as example.co.uk. A plan with no room " +
-    "for another domain answers 402 plan_limit_reached; retrying will not help, a person has " +
-    "to upgrade or remove a domain.",
+    "for another domain answers 402 plan_limit_reached; a retry answers the same until a person " +
+    "upgrades or removes a domain.",
   schema: {
     domain: z
       .string()
       .min(3)
-      .describe("The bare domain you send from, e.g. example.com: no scheme, path or @, and not a public suffix"),
+      .describe("The bare domain mail is sent from, e.g. example.com: no scheme, path or @, and not a public suffix"),
     risk_class: z
       .enum(["transactional", "marketing"])
       .optional()
-      .describe("Omit to provision both, which is almost always what you want"),
+      .describe("Omitted, both are provisioned, which almost every sender needs"),
   },
   handler: async (args: Record<string, unknown>) => request("POST", "/v1/domains", args),
 };

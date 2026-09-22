@@ -10,11 +10,11 @@ export const listBroadcastsTool = {
   name: "list_broadcasts",
   description:
     "List campaigns, newest first, with their status. Paged: at most 100 per call; while " +
-    "has_more is true, pass next_cursor back as cursor. Each row is the campaign object " +
-    "get_broadcast returns, live progress and A/B results included, without its html: use " +
-    "get_broadcast only to read the html. " +
+    "has_more is true, next_cursor passed back as cursor returns the next page. Each row is the " +
+    "campaign object get_broadcast returns, live progress and A/B results included, without its " +
+    "html, which only get_broadcast returns. " +
     "Every field is snake_case and always present, null when unset. A campaign showing " +
-    "'paused' is not broken; read its pause_reason. A quota or interrupted pause continues on its " +
+    "'paused' is not broken; its pause_reason says why. A quota or interrupted pause continues on its " +
     "own. A warm-up pause is the sending domain's daily allowance protecting its reputation: it " +
     "resumes on its own at resume_after and cannot be resumed before then. A pause for no postal " +
     "address needs a person to add one in Settings, and one for a suspended workspace needs " +
@@ -40,8 +40,8 @@ export const listBroadcastsTool = {
 const CAMPAIGN_KEY_GUARDRAILS =
   "The calling API key's guardrails apply: a key that holds its sends for approval " +
   "(requires_approval) or has allowed_recipients gets 403 forbidden, because a campaign cannot " +
-  "be held for approval or kept to an allowlist. Retrying will not help; a person sends it from " +
-  "the dashboard, or uses a key without those guardrails.";
+  "be held for approval or kept to an allowlist. A retry answers the same; the campaign is sent " +
+  "by a person from the dashboard, or with a key without those guardrails.";
 
 /**
  * A capped key pays once for each campaign it puts on its way, whoever
@@ -52,15 +52,15 @@ const CAMPAIGN_DAILY_LIMIT =
   "or scheduling a draft counts its recipients, and starting a scheduled campaign now, moving it " +
   "earlier, resuming it or deciding its winner counts what it still has to send, unless this key " +
   "already paid for that campaign. When that does not fit what is left of the limit today the " +
-  "call answers 429 daily_limit and nothing changes; do not retry the same day.";
+  "call answers 429 daily_limit and nothing changes; a retry the same day answers the same.";
 
 const variantSchema = z.object({
   key: z
     .string()
     .max(32)
-    .describe("Your name for this variant, lowercase letters, digits, - or _: 'urgent', 'question'"),
-  subject: z.string().min(1).max(998).optional().describe("Subject for this variant; omit to use the campaign's"),
-  from_name: z.string().optional().describe("From display name for this variant; omit to use the campaign's"),
+    .describe("A name for this variant, lowercase letters, digits, - or _: 'urgent', 'question'"),
+  subject: z.string().min(1).max(998).optional().describe("Subject for this variant; the campaign's when omitted"),
+  from_name: z.string().optional().describe("From display name for this variant; the campaign's when omitted"),
   send_at: z
     .string()
     .optional()
@@ -73,11 +73,11 @@ const variantSchema = z.object({
 export const createBroadcastTool = {
   name: "create_broadcast",
   description:
-    "Create a campaign as a draft. Nothing is sent: follow with preview_broadcast, then " +
-    "send_broadcast. identity_id must be a marketing sending domain (see list_sending_domains; " +
+    "Create a campaign as a draft. Nothing is sent: preview_broadcast reports its reach and " +
+    "send_broadcast sends it. identity_id must be a marketing sending domain (see list_sending_domains; " +
     "risk_class 'marketing'). topic_key must name an existing topic (list_topics); an unknown one " +
     "is refused with 422 unknown_topic, since it would count everyone as opted out. A segment_id " +
-    "must filter the same audience as audience_id. To A/B test, pass 2 to 10 'variants' that differ in subject, " +
+    "must filter the same audience as audience_id. An A/B test takes 2 to 10 'variants' that differ in subject, " +
     "from_name or send_at, and optionally 'ab_test'. A subject or from-name test sends " +
     "sample_share of the audience (default 0.2) split evenly across the variants, waits " +
     "decide_after_minutes (default 240) after the sample is out, picks the variant with the " +
@@ -116,7 +116,7 @@ export const createBroadcastTool = {
           .optional()
           .describe(
             "Only contacts who opened, clicked or were active in your product (last_active_at) in N days. " +
-              "Use this, not exclude_unengaged_days, on a freshly imported list: that one keeps everyone new.",
+              "Unlike exclude_unengaged_days, which keeps everyone new, this one filters a freshly imported list.",
           ),
         tags: z
           .array(z.string().min(1).max(60))
@@ -124,7 +124,7 @@ export const createBroadcastTool = {
           .optional()
           .describe(
             "Only contacts carrying every one of these tags, e.g. ['audio-player'] to mail one product's " +
-              "users from an audience that holds everyone. See list_tags for what exists",
+              "users from an audience that holds everyone. list_tags returns the tags that exist",
           ),
         exclude_tags: z
           .array(z.string().min(1).max(60))
@@ -156,8 +156,7 @@ export const previewBroadcastTool = {
   name: "preview_broadcast",
   description:
     "How many contacts a campaign would reach, and whether the reputation gate would allow it. " +
-    "Always run this before sending — it is the only way to see the size of a campaign without " +
-    "starting it. For an A/B test it also reports the sample size and per-variant count " +
+    "It is the only way to see the size of a campaign without starting it. For an A/B test it also reports the sample size and per-variant count " +
     "against the 100-per-variant floor; a send below the floor is refused.",
   schema: { id: BROADCAST_ID },
   handler: async (args: Record<string, unknown>) =>
@@ -169,7 +168,7 @@ export const getBroadcastTool = {
   description:
     "One campaign, with a 'progress' object while it is sending, paused or testing: how many " +
     "addresses are still pending, sent, failed, or skipped because the person opted out after " +
-    "the campaign started. This is how you tell a paused campaign that is still making " +
+    "the campaign started. This is what tells a paused campaign that is still making " +
     "progress from one that is waiting; pause_reason says on what, and resume_after when a " +
     "warm-up pause renews. progress is null for a campaign not in flight. For an A/B test, " +
     "progress.by_variant is a list of { key, pending, sent, failed, skipped } in variant order, " +
@@ -185,21 +184,21 @@ export const getBroadcastTool = {
 export const pickBroadcastWinnerTool = {
   name: "pick_broadcast_winner",
   description:
-    "Decide an A/B test now instead of waiting for decide_at. Pass 'variant' to choose a key " +
-    "yourself, or omit it to have the metric decide on the figures so far. The rest of the " +
+    "Decide an A/B test now instead of waiting for decide_at. 'variant' names the winning key; " +
+    "without it the metric decides on the figures so far. The rest of the " +
     "audience is then sent to the winner and cannot be redirected. Only a campaign in status " +
     "'testing' can be decided; anything else, or a campaign that is not an A/B test, answers " +
     "409 invalid_state. A variant key the campaign does not have answers 422 invalid_request. " +
-    "Read get_broadcast first — a variant with a handful of opens more is not a result, and the " +
-    "worker decides on its own at decide_at. Returns the campaign object, as get_broadcast does, " +
+    "get_broadcast shows the figures so far — a variant with a handful of opens more is not a " +
+    "result, and the worker decides on its own at decide_at. Returns the campaign object, as get_broadcast does, " +
     "with the decision in ab_test (winner, decided_by, decided_at, results). If the worker decided " +
-    "first, ab_test.decided_by is 'auto', its winner stands and your variant was ignored; that is " +
-    "not an error, do not call again. " +
+    "first, ab_test.decided_by is 'auto', its winner stands and the variant passed was ignored; " +
+    "that is not an error, and calling again does not change it. " +
     CAMPAIGN_KEY_GUARDRAILS +
     CAMPAIGN_DAILY_LIMIT,
   schema: {
     id: BROADCAST_ID,
-    variant: z.string().optional().describe("Variant key to send the remainder to; omit to let the metric decide"),
+    variant: z.string().optional().describe("Variant key to send the remainder to; when omitted the metric decides"),
   },
   handler: async (args: Record<string, unknown>) => {
     const { id, ...body } = args;
@@ -213,11 +212,11 @@ export const resumeBroadcastTool = {
     "Continue a paused campaign now. It mails only the addresses " +
     "still pending — the audience was frozen when the campaign started and everyone already " +
     "reached is marked — so calling this twice cannot double-send. Only works on a paused " +
-    "campaign; anything else answers 409 invalid_state. Read pause_reason first. A background " +
-    "worker resumes quota, interrupted and suspension pauses on its own, so use this only when " +
-    "waiting is not acceptable. A warm-up pause cannot be resumed before its resume_after (409 " +
-    "invalid_state naming the time) and resumes on its own then; do not retry, the allowance is " +
-    "protecting the domain. While the workspace has no postal address or is suspended the call " +
+    "campaign; anything else answers 409 invalid_state. pause_reason says why it paused. A " +
+    "background worker resumes quota, interrupted and suspension pauses on its own, so this only " +
+    "saves waiting. A warm-up pause cannot be resumed before its resume_after (409 " +
+    "invalid_state naming the time) and resumes on its own then; a retry answers the same, " +
+    "because the allowance is protecting the domain. While the workspace has no postal address or is suspended the call " +
     "answers 422 no_postal_address or workspace_suspended: those need a person, and the campaign " +
     "continues on its own once they are fixed. An A/B test paused mid-sample resumes the sample; " +
     "one paused after the decision resumes the winner. Returns the campaign object, as " +
@@ -233,7 +232,8 @@ export const sendBroadcastTool = {
   name: "send_broadcast",
   description:
     "Send a draft or scheduled campaign now, or schedule it with scheduled_at. This mails every " +
-    "contact in the segment and cannot be undone once started — run preview_broadcast first. " +
+    "contact in the segment and cannot be undone once started; preview_broadcast shows the " +
+    "count beforehand. " +
     "Marketing mail must carry a postal address: a workspace without one is refused with 422 " +
     "no_postal_address (a person adds it in Settings), and a suspended workspace with 422 " +
     "workspace_suspended, whether sending now or scheduling. Calling this on an already-scheduled " +
@@ -243,10 +243,10 @@ export const sendBroadcastTool = {
     "campaign now stands. " +
     CAMPAIGN_KEY_GUARDRAILS +
     CAMPAIGN_DAILY_LIMIT +
-    " Run preview_broadcast to see the count. The campaign's topic_key was checked against existing " +
+    " The campaign's topic_key was checked against existing " +
     "topics when it was created. A campaign bigger than the day's remaining quota or its domain's " +
     "warm-up allowance is not rejected: it sends what it can and stops as 'paused', then " +
-    "continues later. That is expected, not an error to retry. An A/B test sends its " +
+    "continues later. That is expected, not an error, and retrying does not change it. An A/B test sends its " +
     "sample, goes to 'testing', and sends the rest to the winner after decide_after_minutes " +
     "or when pick_broadcast_winner is called. A send-time test is scheduled by its variants' " +
     "send_at and does not accept scheduled_at.",
@@ -257,7 +257,7 @@ export const sendBroadcastTool = {
       .optional()
       .describe(
         "UTC ISO 8601 timestamp with a Z suffix, e.g. 2026-09-16T09:00:00.000Z; offsets and phrases " +
-          "like 'in 2 hours' are refused. Omit to send now",
+          "like 'in 2 hours' are refused. Omitted, it sends now",
       ),
   },
   handler: async (args: Record<string, unknown>) => {

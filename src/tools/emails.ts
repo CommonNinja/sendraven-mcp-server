@@ -13,9 +13,9 @@ export const IDEMPOTENCY_KEY = z
   .describe(
     "Optional. Any unique string for this one message, e.g. 'welcome-ana-2026-09-15'. Retrying " +
       "with the same key and the identical arguments returns the first answer instead of " +
-      "sending again. Never reuse a key for a different message: that is refused with 422 " +
+      "sending again. A key reused for a different message is refused with 422 " +
       "idempotency_key_reused and nothing is sent. 409 idempotency_in_progress means the first " +
-      "attempt is still running; wait a few seconds and retry with the same key",
+      "attempt is still running; a retry with the same key a few seconds later returns its answer",
   );
 
 /**
@@ -24,31 +24,31 @@ export const IDEMPOTENCY_KEY = z
  */
 export const SEND_ERRORS =
   "Refusals, by type: 422 no_verified_identity (the From domain has no verified sending domain; " +
-  "add and verify it, retrying will not help); 422 invalid_request (a bad field, or more than " +
-  "50 recipients across to, cc and bcc: split it into separate messages or use a campaign); " +
+  "a retry answers the same until it is added and verified); 422 invalid_request (a bad field, " +
+  "or more than 50 recipients across to, cc and bcc, which fit as separate messages or a campaign); " +
   "422 unknown_topic; 422 invalid_schedule; 403 recipient_not_allowed (this key's allowlist); " +
-  "429 daily_limit (this key's daily cap; wait for tomorrow, do not retry now); four billing " +
+  "429 daily_limit (this key's daily cap; it resets tomorrow, and a retry today answers the same); four billing " +
   "refusals, all 402 and none retryable — plan_limit_reached (the Free plan's 3,000 emails a " +
   "month are spent; a person has to activate paid sending), payment_method_required (the " +
   "workspace has never had a payment method verified, so no outbound email leaves it at all, " +
-  "including on Free; only a person can add one in the dashboard), billing_past_due (the " +
+  "including on Free; only a person can add one, in the dashboard), billing_past_due (the " +
   "payment failed for good) and budget_exceeded (the workspace's own spend ceiling; by default " +
   "it stops marketing and lets transactional through); 422 " +
   "workspace_suspended and 422 no_postal_address (a person has to act). 502 ses_error is the " +
-  "provider; retrying later with the same idempotency_key is safe. Call get_usage to see which " +
-  "of these applies before sending, and stop rather than looping on any of them.";
+  "provider, and a later retry with the same idempotency_key is safe. get_usage shows which " +
+  "of these applies before a send, and apart from ses_error none clears by repeating the call.";
 
 export const sendEmailTool = {
   name: "send_email",
   description:
-    "Send a transactional email, immediately or scheduled. Use scheduled_at with a relative " +
+    "Send a transactional email, immediately or scheduled. scheduled_at takes a relative " +
     "phrase like 'in 3 days' or an ISO timestamp. The From domain must already be verified. " +
     "Every accepted send answers with the same fields: id, status, thread_id, scheduled_at, " +
     "skipped, reason and approval_id. skipped: true (status 'rejected', with reason) means every " +
-    "recipient was suppressed or opted out and nothing was sent; do not retry. status " +
-    "'pending_approval' (with approval_id) means a person must release it; do not retry. " +
-    "Otherwise skipped is false and reason and approval_id are null. Pass idempotency_key " +
-    "whenever you might retry, and reuse it only for the identical message. " +
+    "recipient was suppressed or opted out and nothing was sent; a retry answers the same. status " +
+    "'pending_approval' (with approval_id) means a person must release it; a retry does not " +
+    "release it. Otherwise skipped is false and reason and approval_id are null. idempotency_key " +
+    "makes a retry of the identical message safe; it matches only the identical message. " +
     SEND_ERRORS,
   schema: {
     from: z.string().describe("Sender address on a verified domain, e.g. 'Team <team@mail.example.com>'"),
@@ -97,8 +97,8 @@ export const listEmailsTool = {
   description:
     "List messages newest first with their delivery status, including held, scheduled, skipped " +
     "and failed ones and the mail campaigns and automations sent. Filter by status or recipient. " +
-    "Paged: at most 100 per call; while has_more is true, pass next_cursor back as cursor with " +
-    "the same filters. An unknown status is refused with 422 invalid_request rather than answering an empty log.",
+    "Paged: at most 100 per call; while has_more is true, next_cursor passed back as cursor with " +
+    "the same filters returns the next page. An unknown status is refused with 422 invalid_request rather than answering an empty log.",
   schema: {
     status: z
       .enum(MESSAGE_STATUSES)
@@ -125,7 +125,7 @@ export const getEmailTool = {
   name: "get_email",
   description:
     "Fetch one message with its full event timeline (send, delivery, bounce, complaint, " +
-    "open, click). This is the tool to reach for when asked why an email didn't arrive.",
+    "open, click). The timeline shows why an email didn't arrive.",
   schema: { id: z.string().describe("Message id") },
   handler: async (args: Record<string, unknown>) => request("GET", `/v1/emails/${args.id}`),
 };
@@ -135,7 +135,7 @@ export const cancelEmailTool = {
   description:
     "Cancel a scheduled email before it sends. Only works while status is 'scheduled': a message " +
     "that has already started sending, or is in any other state, answers 409 invalid_state " +
-    "naming its status; do not retry, read it with get_email instead. An unknown id answers 404 " +
+    "naming its status; a retry answers the same, and get_email shows where it stands. An unknown id answers 404 " +
     "not_found.",
   schema: { id: z.string() },
   handler: async (args: Record<string, unknown>) => request("DELETE", `/v1/emails/${args.id}`),
