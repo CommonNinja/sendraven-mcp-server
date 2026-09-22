@@ -118,6 +118,19 @@ export const createBroadcastTool = {
             "Only contacts who opened, clicked or were active in your product (last_active_at) in N days. " +
               "Use this, not exclude_unengaged_days, on a freshly imported list: that one keeps everyone new.",
           ),
+        tags: z
+          .array(z.string().min(1).max(60))
+          .max(20)
+          .optional()
+          .describe(
+            "Only contacts carrying every one of these tags, e.g. ['audio-player'] to mail one product's " +
+              "users from an audience that holds everyone. See list_tags for what exists",
+          ),
+        exclude_tags: z
+          .array(z.string().min(1).max(60))
+          .max(20)
+          .optional()
+          .describe("Leave out contacts carrying any of these tags, e.g. ['premium']"),
       })
       .optional(),
     variants: z.array(variantSchema).min(2).max(10).optional(),
