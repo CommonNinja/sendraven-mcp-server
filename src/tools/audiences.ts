@@ -238,9 +238,7 @@ export const tagContactTool = {
     "audience they are on. Call list_tags first to see what the workspace already uses, rather " +
     "than inventing a synonym for an existing tag. Adding a tag an automation exits on (e.g. " +
     "customer), or removing one it requires (e.g. trial), ends the person's enrolment in it at " +
-    "once. Adding a tag the contact did not already carry starts every active automation with a " +
-    "tag_added trigger on it, so a tag can put someone on a sequence: check list_automations " +
-    "before tagging on a whim. Returns the contact, as get_contact does, with its tags after the change. To see which " +
+    "once. Returns the contact, as get_contact does, with its tags after the change. To see which " +
     "enrolments a tag change ended, call list_automation_enrollments with status 'canceled' and " +
     "read each row's cancel_reason (exit_tag or required_tag_missing).",
   schema: {

@@ -111,16 +111,6 @@ const REENROLLMENT = z
       "offer, where a second run would mail someone the same sequence twice",
   );
 
-const DEFAULT_VARIABLES = z
-  .record(z.string())
-  .describe(
-    "Template values every enrolment gets, under the variables an enrolment passes (which win). " +
-      "Required for contact_added and tag_added, which enrol with no values: every placeholder in " +
-      "the steps' subjects, html and templates needs one here, or the call answers 422 " +
-      "missing_variables naming the missing ones. Read at each step, so a fix reaches people " +
-      "already enrolled",
-  );
-
 const exitRuleSchema = {
   topic_key: z
     .string()
@@ -169,9 +159,7 @@ export const createAutomationTool = {
     "no_verified_identity, and a slug already in use in this workspace answers 409 conflict: " +
     "pick another slug, or find the existing one with list_automations rather than creating a " +
     "second. reenrollment decides whether someone whose enrolment ended can be enrolled again: " +
-    "'after_completion' (the default) allows it, 'never' enrols each person once. When one " +
-    "audience holds everyone, start a product-specific sequence with a tag_added trigger on " +
-    "that product's tag, not contact_added, which would mail every new contact.",
+    "'after_completion' (the default) allows it, 'never' enrols each person once.",
   schema: {
     name: z.string().min(1).max(200),
     slug: z.string().regex(/^[a-z0-9-]+$/).describe("Lowercase letters, digits and hyphens"),
@@ -182,16 +170,13 @@ export const createAutomationTool = {
     reply_to: REPLY_TO.optional(),
     trigger: z.object({
       kind: z
-        .enum(["api", "contact_added", "event", "tag_added"])
+        .enum(["api", "contact_added", "event"])
         .describe(
           "api: enrol with enroll_in_automation. contact_added: starts when someone joins " +
-            "audience_id. event: starts on emit_event with event_name. tag_added: starts when a " +
-            "contact gains tag (tag_contact, or a contact added carrying it); a contact that " +
-            "already had the tag starts nothing, so turning it on does not mail everyone tagged",
+            "audience_id. event: starts on emit_event with event_name",
         ),
       audience_id: z.string().optional().describe("Required for contact_added; the audience's id, not its name"),
       event_name: z.string().min(1).max(120).optional().describe("Required for event, e.g. trial_started. Up to 120 characters, matched exactly"),
-      tag: z.string().min(1).max(60).optional().describe("Required for tag_added, e.g. audio-player. Normalised like contact tags"),
     }),
     steps: z
       .array(
@@ -219,7 +204,6 @@ export const createAutomationTool = {
       .max(20),
     ...exitRuleSchema,
     reenrollment: REENROLLMENT.optional(),
-    default_variables: DEFAULT_VARIABLES.optional(),
   },
   handler: async (args: Record<string, unknown>) => request("POST", "/v1/automations", args),
 };
@@ -228,8 +212,7 @@ export const updateAutomationTool = {
   name: "update_automation",
   description:
     "Change the rules that take someone out of a sequence (topic_key, exit_tags, required_tags, " +
-    "exit_on_reply), its reply_to, its reenrollment, or its default_variables (replaces the whole " +
-    "set; {} clears it). Steps and the trigger are fixed once " +
+    "exit_on_reply), its reply_to, or its reenrollment. Steps and the trigger are fixed once " +
     "created. A reenrollment change applies from the next enrolment; nobody already enrolled is " +
     "touched. Fields left " +
     "out keep their value; a null topic_key or reply_to, or an empty tag list, clears it. People " +
@@ -244,7 +227,6 @@ export const updateAutomationTool = {
     topic_key: exitRuleSchema.topic_key.nullable(),
     reply_to: REPLY_TO.nullable().optional(),
     reenrollment: REENROLLMENT.optional(),
-    default_variables: DEFAULT_VARIABLES.optional(),
   },
   handler: async (args: Record<string, unknown>) => {
     const { automation_id, ...body } = args;
