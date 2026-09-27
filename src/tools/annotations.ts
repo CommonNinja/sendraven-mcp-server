@@ -25,7 +25,14 @@ export interface ToolAnnotations {
   openWorldHint?: boolean;
 }
 
-const read = (title: string): ToolAnnotations => ({ title, readOnlyHint: true, openWorldHint: false });
+// destructiveHint is meaningless when readOnlyHint is true, but OpenAI's plugin
+// review requires every hint to be stated, so read-only tools say `false`.
+const read = (title: string): ToolAnnotations => ({
+  title,
+  readOnlyHint: true,
+  destructiveHint: false,
+  openWorldHint: false,
+});
 const write = (title: string, extra: Partial<ToolAnnotations> = {}): ToolAnnotations => ({
   title,
   readOnlyHint: false,
