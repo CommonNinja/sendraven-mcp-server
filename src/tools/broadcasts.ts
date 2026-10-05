@@ -84,7 +84,9 @@ export const createBroadcastTool = {
     "best unique open rate (or click rate with metric 'click'), and sends the rest to it. " +
     "Each variant needs at least 100 recipients in the sample or the send is refused — " +
     "preview_broadcast shows the number. Metric 'click' only works once the domain has click " +
-    "tracking; until then every variant shows zero clicks and the first variant wins by default.",
+    "tracking; until then every variant shows zero clicks and the first variant wins by default. " +
+    "The response's web_version_url is a public page of the campaign (one URL, no recipient's " +
+    "unsubscribe link) to share on a site or social post; null until click tracking is active.",
   schema: {
     audience_id: z.string().describe("The audience's id from list_audiences (a UUID), not its name"),
     identity_id: z.string().describe("A marketing sending domain's id from list_sending_domains (a UUID), not the domain name"),
@@ -96,6 +98,13 @@ export const createBroadcastTool = {
       .string()
       .optional()
       .describe("An existing topic's key from list_topics. Lets recipients opt out of this kind of mail only"),
+    view_in_browser: z
+      .boolean()
+      .optional()
+      .describe(
+        "Open every message with a 'View this email in your browser' link to the campaign's web_version_url. " +
+          "Needs the sending domain's click tracking to be active (list_sending_domains); otherwise 422",
+      ),
     segment_id: z.string().optional().describe("A saved segment's id from list_segments (a UUID), not its name or key"),
     segment: z
       .object({
