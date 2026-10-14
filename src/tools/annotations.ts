@@ -81,8 +81,10 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
 
   // Suppressions
   list_suppressions: read("List suppressions"),
-  add_suppression: write("Suppress address", { idempotentHint: true }),
-  suppress_many: write("Suppress addresses in bulk", { idempotentHint: true }),
+  // Suppressing ends the address's automation enrolments and cancels its scheduled
+  // sends, which removing the suppression does not bring back.
+  add_suppression: destroy("Suppress address", { idempotentHint: true }),
+  suppress_many: destroy("Suppress addresses in bulk", { idempotentHint: true, openWorldHint: true }),
   remove_suppression: destroy("Remove suppression", { idempotentHint: true }),
 
   // Campaigns
@@ -101,23 +103,27 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   list_automation_enrollments: read("List automation enrollments"),
   create_automation: write("Create automation"),
   update_automation: destroy("Update automation"),
-  set_automation_status: write("Activate or pause automation", { idempotentHint: true }),
+  // Activating starts mailing everyone enrolled.
+  set_automation_status: write("Activate or pause automation", { idempotentHint: true, openWorldHint: true }),
   enroll_in_automation: send("Enroll contact in automation"),
   emit_event: send("Emit automation event"),
 
   // Topics and preferences
   list_topics: read("List topics"),
   get_email_preferences: read("Get email preferences"),
-  set_email_preferences: write("Set email preferences", { idempotentHint: true }),
+  // Opting out of a topic ends that topic's automation enrolments.
+  set_email_preferences: destroy("Set email preferences", { idempotentHint: true }),
 
   // Contacts and audiences
   list_audiences: read("List audiences"),
   add_contact: write("Add contact"),
-  import_contacts: write("Import contacts"),
+  // Overwrites existing contacts' fields and can start contact_added sequences.
+  import_contacts: destroy("Import contacts", { openWorldHint: true }),
   get_contact: read("Get contact"),
   find_contact: read("Find contact"),
   update_contact: destroy("Update contact", { idempotentHint: true }),
-  tag_contact: write("Tag contact", { idempotentHint: true }),
+  // A tag rule can end an enrolment or start a sequence that mails the contact.
+  tag_contact: destroy("Tag contact", { idempotentHint: true, openWorldHint: true }),
   remove_from_audience: destroy("Remove contact from audience", { idempotentHint: true }),
   delete_contact: destroy("Delete contact", { idempotentHint: true }),
   list_segments: read("List segments"),
