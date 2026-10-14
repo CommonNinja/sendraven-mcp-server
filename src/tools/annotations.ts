@@ -117,7 +117,8 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
 
   // Contacts and audiences
   list_audiences: read("List audiences"),
-  add_contact: write("Add contact"),
+  // A new audience membership starts any contact_added sequence, which mails the contact.
+  add_contact: write("Add contact", { openWorldHint: true }),
   // Overwrites existing contacts' fields and can start contact_added sequences.
   import_contacts: destroy("Import contacts", { openWorldHint: true }),
   get_contact: read("Get contact"),
