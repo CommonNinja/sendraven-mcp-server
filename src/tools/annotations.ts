@@ -92,7 +92,8 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   get_broadcast: read("Get campaign"),
   preview_broadcast: read("Preview campaign"),
   list_broadcast_recipients: read("List campaign recipients"),
-  create_broadcast: write("Create campaign draft"),
+  // Sends nothing, but the draft gets a public web version (web_version_url).
+  create_broadcast: write("Create campaign draft", { openWorldHint: true }),
   send_broadcast: send("Send or schedule campaign"),
   resume_broadcast: send("Resume paused campaign"),
   pick_broadcast_winner: send("Pick A/B test winner"),
