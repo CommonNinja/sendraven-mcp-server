@@ -19,6 +19,28 @@ export const IDEMPOTENCY_KEY = z
   );
 
 /**
+ * Tags on a send, shared by send_email and reply_to_message, and the filter
+ * that reads them back in list_emails and list_threads.
+ */
+export const TAGS = z
+  .array(z.object({ name: z.string().min(1), value: z.string() }))
+  .max(10)
+  .optional()
+  .describe(
+    "Up to 10 name/value labels, e.g. [{name:'category', value:'win-back'}]. They do not change " +
+      "delivery. Pass the same pair as tag 'category:win-back' to list_emails or list_threads to find " +
+      "this mail and its conversation again; a conversation carries the tags of every message sent on it",
+  );
+
+export const TAG_FILTER = z
+  .string()
+  .optional()
+  .describe(
+    "One tag as name:value, e.g. 'category:win-back': only what carries exactly that pair. " +
+      "Without a colon it is refused with 422 invalid_request",
+  );
+
+/**
  * The refusals every send can hit, named once so the three send tools agree.
  * Keep in step with the error vocabulary in CLAUDE.md.
  */
@@ -72,6 +94,7 @@ export const sendEmailTool = {
     html: z.string().optional().describe("HTML body; provide html, text, or both"),
     text: z.string().optional(),
     scheduled_at: z.string().optional().describe("'in 3 days' or an ISO 8601 timestamp"),
+    tags: TAGS,
     idempotency_key: IDEMPOTENCY_KEY,
   },
   handler: async (args: Record<string, unknown>) => {
@@ -96,7 +119,7 @@ export const listEmailsTool = {
   name: "list_emails",
   description:
     "List messages newest first with their delivery status, including held, scheduled, skipped " +
-    "and failed ones and the mail campaigns and automations sent. Filter by status or recipient. " +
+    "and failed ones and the mail campaigns and automations sent. Filter by status, recipient or tag. " +
     "Paged: at most 100 per call; while has_more is true, next_cursor passed back as cursor with " +
     "the same filters returns the next page. An unknown status is refused with 422 invalid_request rather than answering an empty log.",
   schema: {
@@ -108,6 +131,7 @@ export const listEmailsTool = {
           "scheduled send was cancelled. failed: the provider refused it, or a scheduled send could not go out",
       ),
     to: z.string().optional().describe("Filter to one recipient address"),
+    tag: TAG_FILTER,
     limit: z.number().int().min(1).max(100).optional().describe("Page size, 1 to 100; defaults to 50"),
     cursor: z.string().optional().describe("next_cursor from the previous page, passed back unchanged"),
   },

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { idempotencyHeader, request } from "../client";
-import { IDEMPOTENCY_KEY } from "./emails";
+import { IDEMPOTENCY_KEY, TAG_FILTER, TAGS } from "./emails";
 
 export const listThreadsTool = {
   name: "list_threads",
@@ -10,18 +10,21 @@ export const listThreadsTool = {
     "approval or scheduled does not count as sent: such a thread stays in that list with " +
     "pending_reply true, meaning its answer is already on the way. Most recently " +
     "active first, at most 100 per call; while has_more is true, next_cursor passed back as " +
-    "cursor with the same awaiting_reply returns the next page.",
+    "cursor with the same awaiting_reply and tag returns the next page. Each thread lists the tags " +
+    "of the messages sent on it.",
   schema: {
     awaiting_reply: z
       .boolean()
       .optional()
       .describe("true: only threads waiting on an answer. false: only threads that are not. Omitted: all"),
+    tag: TAG_FILTER,
     limit: z.number().int().min(1).max(100).optional().describe("Page size, 1 to 100; defaults to 50"),
     cursor: z.string().optional().describe("next_cursor from the previous page, passed back unchanged"),
   },
   handler: async (args: Record<string, unknown>) => {
     const qs = new URLSearchParams();
     if (args.awaiting_reply !== undefined) qs.set("awaiting_reply", String(args.awaiting_reply));
+    if (args.tag !== undefined) qs.set("tag", String(args.tag));
     if (args.limit !== undefined) qs.set("limit", String(args.limit));
     if (args.cursor !== undefined) qs.set("cursor", String(args.cursor));
     return request("GET", `/v1/threads?${qs}`);
@@ -72,6 +75,7 @@ export const replyToMessageTool = {
           "status 'scheduled' with the message id; cancel_scheduled_email with that id stops it, which " +
           "is how a follow-up is withdrawn when the person answers first",
       ),
+    tags: TAGS,
     idempotency_key: IDEMPOTENCY_KEY,
   },
   handler: async (args: Record<string, unknown>) => {
