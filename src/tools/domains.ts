@@ -21,7 +21,9 @@ export const addDomainTool = {
     "Register a sending domain and get back the DNS records to publish. It takes the domain " +
     "mail is sent from — mail.<domain> and news.<domain> are provisioned beneath it and the right one " +
     "is chosen per message, so a marketing complaint spike can never affect password reset " +
-    "delivery. risk_class provisions one of the two on its own. Two records come " +
+    "delivery. subdomains names the pair differently (tx. and promo.), still one domain. risk_class " +
+    "provisions one identity on the domain exactly as given instead; it cannot be combined with " +
+    "subdomains. Two records come " +
     "back marked optional: an inbound MX so replies land in threads, and a link. CNAME that " +
     "turns on click tracking on the customer's own name once its certificate is issued. " +
     "Adding a domain that already exists returns it rather than a duplicate. A public suffix " +
@@ -39,6 +41,13 @@ export const addDomainTool = {
       .enum(["transactional", "marketing"])
       .optional()
       .describe("Omitted, both are provisioned, which almost every sender needs"),
+    subdomains: z
+      .object({
+        transactional: z.string().optional().describe("One label, e.g. tx for tx.example.com. Default mail"),
+        marketing: z.string().optional().describe("One label, e.g. promo for promo.example.com. Default news"),
+      })
+      .optional()
+      .describe("Only to name the pair something other than mail. and news.; the two must differ"),
   },
   handler: async (args: Record<string, unknown>) => request("POST", "/v1/domains", args),
 };
