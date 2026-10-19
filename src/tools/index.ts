@@ -9,6 +9,7 @@
  */
 import {
   cancelEmailTool,
+  updateEmailTagsTool,
   getEmailTool,
   listEmailsTool,
   sendEmailTool,
@@ -83,6 +84,7 @@ export const TOOLS: ToolDef[] = [
   listEmailsTool,
   getEmailTool,
   cancelEmailTool,
+  updateEmailTagsTool,
   listDomainsTool,
   addDomainTool,
   verifyDomainTool,

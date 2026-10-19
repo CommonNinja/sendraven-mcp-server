@@ -56,6 +56,7 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   list_emails: read("List sent emails"),
   get_email: read("Get email"),
   cancel_scheduled_email: destroy("Cancel scheduled email", { idempotentHint: true }),
+  update_email_tags: write("Update email tags", { idempotentHint: true }),
   list_scheduled_emails: read("List scheduled emails"),
   get_email_metrics: read("Get email metrics"),
 

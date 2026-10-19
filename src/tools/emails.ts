@@ -164,3 +164,33 @@ export const cancelEmailTool = {
   schema: { id: z.string() },
   handler: async (args: Record<string, unknown>) => request("DELETE", `/v1/emails/${args.id}`),
 };
+
+export const updateEmailTagsTool = {
+  name: "update_email_tags",
+  description:
+    "Add or remove tags on an email already sent, scheduled or held, to refile it for the tag " +
+    "filters of list_emails and list_threads. Removals apply first, then additions, so one call " +
+    "swaps a tag: remove_tags [{name:'recovery_case'}] (no value: every tag with that name) with " +
+    "add_tags [{name:'category', value:'billing-recovery'}]. The thread and the dashboard's tag " +
+    "suggestions follow. Changes only what SendRaven stores, not what the provider already saw. " +
+    "Safe to repeat. Answers the email as get_email does. broadcast_id, set on campaign mail, " +
+    "cannot be changed (422 invalid_request), nor can a message end with more than 10 tags. " +
+    "An unknown id answers 404 not_found.",
+  schema: {
+    id: z.string().describe("Message id"),
+    add_tags: z
+      .array(z.object({ name: z.string().min(1), value: z.string() }))
+      .max(10)
+      .optional()
+      .describe("Pairs to add; one already present is not added twice"),
+    remove_tags: z
+      .array(z.object({ name: z.string().min(1), value: z.string().optional() }))
+      .max(50)
+      .optional()
+      .describe("Tags to take off; leave value out to remove every tag with that name"),
+  },
+  handler: async (args: Record<string, unknown>) => {
+    const { id, ...body } = args;
+    return request("PATCH", `/v1/emails/${id}`, body);
+  },
+};
