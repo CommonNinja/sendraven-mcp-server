@@ -202,9 +202,24 @@ function runHttp(): void {
 
   app.get("/healthz", (_req: Request, res: Response) => res.json({ ok: true }));
 
-  app.listen(port, () => {
+  const server = app.listen(port, () => {
     console.error(`SendRaven MCP server listening on :${port} (${MCP_SERVER_URL})`);
   });
+  // Above the load balancer's idle timeout, or it reuses a socket Node already closed (a 502).
+  const keepAliveMs = Number(process.env.KEEP_ALIVE_TIMEOUT_MS);
+  if (keepAliveMs > 0) {
+    server.keepAliveTimeout = keepAliveMs;
+    server.headersTimeout = keepAliveMs + 1000;
+  }
+
+  // A deploy sends SIGTERM: stop taking connections, let in-flight calls finish.
+  const shutdown = (signal: string) => {
+    console.error(`SendRaven MCP server: received ${signal}, shutting down`);
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 25_000).unref();
+  };
+  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
 }
 
 /* ----------------------------------------------------------------- main --- */
