@@ -79,6 +79,7 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   list_sending_domains: read("List sending domains"),
   add_sending_domain: write("Add sending domain"),
   verify_sending_domain: write("Check sending domain DNS", { idempotentHint: true }),
+  set_utm_tags: write("Set UTM tags", { idempotentHint: true }),
 
   // Suppressions
   list_suppressions: read("List suppressions"),

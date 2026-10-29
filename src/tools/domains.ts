@@ -61,3 +61,28 @@ export const verifyDomainTool = {
   handler: async (args: Record<string, unknown>) =>
     request("POST", `/v1/domains/${args.id}/verify`),
 };
+
+export const setUtmTagsTool = {
+  name: "set_utm_tags",
+  description:
+    "Turn UTM tags on or off for a sending domain, and set what they say. When on, every link in " +
+    "that domain's marketing HTML gets utm_source (default 'newsletter'), utm_medium (default " +
+    "'email') and utm_campaign (the campaign's name or the automation's slug). A link that already " +
+    "has any utm_ parameter is left as written, and unsubscribe links are never touched. Fields " +
+    "left out keep their value; a null source or medium restores the default. Answers the domain.",
+  schema: {
+    id: z.string().describe("The sending domain's id from list_sending_domains (a UUID), not the domain name"),
+    enabled: z.boolean().optional(),
+    source: z.string().nullable().optional().describe("utm_source; null for the default 'newsletter'"),
+    medium: z.string().nullable().optional().describe("utm_medium; null for the default 'email'"),
+    include_transactional: z.boolean().optional().describe("Also tag transactional mail; off by default"),
+    hosts: z
+      .array(z.string())
+      .optional()
+      .describe("Only tag links to these hosts (subdomains included); every host when empty"),
+  },
+  handler: async (args: Record<string, unknown>) => {
+    const { id, ...utm } = args;
+    return request("PATCH", `/v1/domains/${id}`, { utm_tags: utm });
+  },
+};

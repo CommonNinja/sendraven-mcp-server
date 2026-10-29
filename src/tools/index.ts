@@ -14,7 +14,7 @@ import {
   listEmailsTool,
   sendEmailTool,
 } from "./emails";
-import { addDomainTool, listDomainsTool, verifyDomainTool } from "./domains";
+import { addDomainTool, listDomainsTool, setUtmTagsTool, verifyDomainTool } from "./domains";
 import {
   addSuppressionTool,
   listSuppressionsTool,
@@ -92,6 +92,7 @@ export const TOOLS: ToolDef[] = [
   listDomainsTool,
   addDomainTool,
   verifyDomainTool,
+  setUtmTagsTool,
   listSuppressionsTool,
   addSuppressionTool,
   removeSuppressionTool,
