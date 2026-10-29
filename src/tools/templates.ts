@@ -43,6 +43,10 @@ export const sendTemplateTool = {
     variables: z.record(z.string()),
     from: z.string(),
     to: z.string().describe("Recipient address, or 'Name <address>' to show their name"),
+    reply_to: z
+      .string()
+      .optional()
+      .describe("Where replies go instead of from; outside SendRaven's domains they never reach a thread"),
     subject: z.string().optional().describe("Overrides the template's subject"),
     scheduled_at: z.string().optional(),
     idempotency_key: IDEMPOTENCY_KEY,

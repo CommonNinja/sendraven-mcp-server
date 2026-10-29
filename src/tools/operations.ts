@@ -49,6 +49,26 @@ export const batchSuppressTool = {
   handler: async (args: Record<string, unknown>) => request("POST", "/v1/suppressions/batch", args),
 };
 
+export const listWebhooksTool = {
+  name: "list_webhooks",
+  description:
+    "The workspace's webhook endpoints: each with id, url, the events it receives and whether " +
+    "it is enabled. Read-only: endpoints are added and changed in the dashboard, because a " +
+    "tool that could point one at a new URL would let an agent route the workspace's mail " +
+    "events to itself. Use an id here with list_webhook_deliveries.",
+  schema: {
+    limit: z.number().int().min(1).max(100).optional().describe("Page size, 1 to 100; defaults to 50"),
+    cursor: z.string().optional().describe("next_cursor from the previous page, passed back unchanged"),
+  },
+  handler: async (args: Record<string, unknown>) => {
+    const qs = new URLSearchParams();
+    if (args.limit !== undefined) qs.set("limit", String(args.limit));
+    if (args.cursor !== undefined) qs.set("cursor", String(args.cursor));
+    const q = qs.toString();
+    return request("GET", `/v1/webhook-endpoints${q ? `?${q}` : ""}`);
+  },
+};
+
 export const listWebhookEventsTool = {
   name: "list_webhook_deliveries",
   description:
@@ -57,7 +77,7 @@ export const listWebhookEventsTool = {
     "is what tells 'we never sent it' from 'your endpoint returned 500'. Newest first, the most " +
     "recent `limit` only; not paged.",
   schema: {
-    endpoint_id: z.string(),
+    endpoint_id: z.string().describe("An endpoint's id from list_webhooks"),
     limit: z.number().int().min(1).max(200).optional().describe("1 to 200; defaults to 50"),
   },
   handler: async (args: Record<string, unknown>) =>

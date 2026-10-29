@@ -308,3 +308,16 @@ export const emitEventTool = {
   },
   handler: async (args: Record<string, unknown>) => request("POST", "/v1/events", args),
 };
+
+export const deleteAutomationTool = {
+  name: "delete_automation",
+  description:
+    "Delete an automation for good and cancel every active enrolment in it, so nobody is sent " +
+    "another step. Answers enrollments_canceled. It cannot be undone: to stop it for a while " +
+    "and continue everyone later, use set_automation_status with paused instead. Mail already " +
+    "sent and its history stay.",
+  schema: {
+    automation_id: z.string().describe("The automation's id from list_automations (a UUID), not its name or slug"),
+  },
+  handler: async (args: Record<string, unknown>) => request("DELETE", `/v1/automations/${args.automation_id}`),
+};

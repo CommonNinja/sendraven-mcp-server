@@ -34,6 +34,7 @@ import { listTemplatesTool, renderTemplateTool, sendTemplateTool } from "./templ
 import { decideApprovalTool, listApprovalsTool } from "./approvals";
 import {
   createAutomationTool,
+  deleteAutomationTool,
   getAutomationTool,
   emitEventTool,
   enrollTool,
@@ -64,6 +65,7 @@ import {
   getUsageTool,
   listScheduledTool,
   listWebhookEventsTool,
+  listWebhooksTool,
   metricsTool,
 } from "./operations";
 
@@ -114,6 +116,7 @@ export const TOOLS: ToolDef[] = [
   createAutomationTool,
   updateAutomationTool,
   setAutomationStatusTool,
+  deleteAutomationTool,
   enrollTool,
   emitEventTool,
   listConversionGoalsTool,
@@ -133,6 +136,7 @@ export const TOOLS: ToolDef[] = [
   metricsTool,
   listScheduledTool,
   batchSuppressTool,
+  listWebhooksTool,
   listWebhookEventsTool,
   broadcastRecipientsTool,
   getUsageTool,

@@ -145,7 +145,18 @@ export const createBroadcastTool = {
     variants: z.array(variantSchema).min(2).max(10).optional(),
     ab_test: z
       .object({
-        metric: z.enum(["open", "click"]).optional().describe("What decides the winner; default 'open'"),
+        metric: z
+          .enum(["open", "click", "conversion"])
+          .optional()
+          .describe(
+            "What decides the winner; default 'open'. 'conversion' decides on people with a conversion " +
+              "attributed to the variant (needs a goal from list_conversion_goals and click tracking); " +
+              "give it decide_after_minutes of 1440 or more, since conversions arrive after the click",
+          ),
+        goal_id: z
+          .string()
+          .optional()
+          .describe("metric 'conversion' only: an id from list_conversion_goals; every goal counts when omitted"),
         sample_share: z
           .number()
           .optional()

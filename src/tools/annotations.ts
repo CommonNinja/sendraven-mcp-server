@@ -137,7 +137,9 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   list_tags: read("List tags"),
 
   // Operations
+  list_webhooks: read("List webhook endpoints"),
   list_webhook_deliveries: read("List webhook deliveries"),
+  delete_automation: destroy("Delete automation"),
   get_usage: read("Get usage and sending status"),
 };
 

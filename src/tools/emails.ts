@@ -90,6 +90,14 @@ export const sendEmailTool = {
       .max(49)
       .optional()
       .describe("Bcc addresses. Each is a recipient: it counts toward the 50, the key's allowlist and its daily limit"),
+    reply_to: z
+      .string()
+      .optional()
+      .describe(
+        "Where replies go instead of from, an address or 'Name <address>'. Replies reach the " +
+          "thread (and list_threads) only when this is on a domain SendRaven receives for; " +
+          "elsewhere they go straight to that inbox and the agent never sees them",
+      ),
     subject: z.string(),
     html: z.string().optional().describe("HTML body; provide html, text, or both"),
     text: z.string().optional(),
