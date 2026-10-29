@@ -111,6 +111,9 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   emit_event: send("Emit automation event"),
 
   // Topics and preferences
+  list_conversion_goals: read("List conversion goals"),
+  create_conversion_goal: write("Create conversion goal"),
+  get_conversion_metrics: read("Get conversion metrics"),
   list_topics: read("List topics"),
   get_email_preferences: read("Get email preferences"),
   // Opting out of a topic ends that topic's automation enrolments.

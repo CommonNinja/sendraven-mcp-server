@@ -294,11 +294,17 @@ export const emitEventTool = {
     "automations_started; 0 means nothing was waiting on that name or the person was excluded. " +
     "The calling key's guardrails apply as for enroll_in_automation, before anything is looked " +
     "up: a key that holds its sends for approval gets 403 forbidden, and a key with a recipient " +
-    "allowlist gets 403 recipient_not_allowed for an address not on it.",
+    "allowlist gets 403 recipient_not_allowed for an address not on it. An event named for a " +
+    "conversion goal (list_conversion_goals) is also recorded as a conversion and its id " +
+    "returned as conversion_id; pass id so a retry is counted once, and value with currency " +
+    "for revenue.",
   schema: {
     name: z.string().min(1).max(120).describe("Event name, e.g. trial_started"),
     email: z.string().email(),
     variables: z.record(z.string()).optional(),
+    id: z.string().min(1).max(200).optional().describe("Your own id for this event, such as an order id; a repeat with the same id counts once"),
+    value: z.number().min(0).optional().describe("Amount, in major units (49.90); requires currency"),
+    currency: z.string().length(3).optional().describe("ISO 4217 code, e.g. USD; requires value"),
   },
   handler: async (args: Record<string, unknown>) => request("POST", "/v1/events", args),
 };

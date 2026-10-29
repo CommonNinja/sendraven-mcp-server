@@ -43,6 +43,7 @@ import {
   updateAutomationTool,
 } from "./automations";
 import { getPreferencesTool, listTopicsTool, setPreferencesTool } from "./topics";
+import { createConversionGoalTool, getConversionMetricsTool, listConversionGoalsTool } from "./conversions";
 import {
   addContactTool,
   importContactsTool,
@@ -115,6 +116,9 @@ export const TOOLS: ToolDef[] = [
   setAutomationStatusTool,
   enrollTool,
   emitEventTool,
+  listConversionGoalsTool,
+  createConversionGoalTool,
+  getConversionMetricsTool,
   listTopicsTool,
   getPreferencesTool,
   setPreferencesTool,
