@@ -140,6 +140,30 @@ export const createBroadcastTool = {
           .max(20)
           .optional()
           .describe("Leave out contacts carrying any of these tags, e.g. ['premium']"),
+        date_conditions: z
+          .array(
+            z.object({
+              field: z
+                .string()
+                .describe(
+                  "created_at, last_opened_at, last_clicked_at, last_active_at, or attributes.<key> for a " +
+                    "date-valued attribute (an ISO 8601 string), e.g. attributes.trial_ends_at",
+                ),
+              op: z
+                .enum(["older_than_days", "within_last_days", "within_next_days", "after_next_days"])
+                .describe(
+                  "older_than_days: more than N days ago. within_last_days: in the past N days. " +
+                    "within_next_days: in the coming N days. after_next_days: more than N days from now",
+                ),
+              days: z.number().int().min(1).max(3650),
+            }),
+          )
+          .max(20)
+          .optional()
+          .describe(
+            "Dates relative to now, all of which must hold. A contact with no value for the field never " +
+              "matches, so 'never opened' is not 'opened more than 30 days ago'",
+          ),
       })
       .optional(),
     variants: z.array(variantSchema).min(2).max(10).optional(),
