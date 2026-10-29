@@ -35,6 +35,7 @@ import { decideApprovalTool, listApprovalsTool } from "./approvals";
 import {
   createAutomationTool,
   getAutomationTool,
+  getAutomationMetricsTool,
   emitEventTool,
   enrollTool,
   listAutomationEnrollmentsTool,
@@ -109,6 +110,7 @@ export const TOOLS: ToolDef[] = [
   decideApprovalTool,
   listAutomationsTool,
   getAutomationTool,
+  getAutomationMetricsTool,
   listAutomationEnrollmentsTool,
   createAutomationTool,
   updateAutomationTool,
