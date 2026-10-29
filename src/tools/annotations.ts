@@ -102,6 +102,7 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   // Automations
   list_automations: read("List automations"),
   get_automation: read("Get automation"),
+  get_automation_metrics: read("Get automation step metrics"),
   list_automation_enrollments: read("List automation enrollments"),
   create_automation: write("Create automation"),
   update_automation: destroy("Update automation"),

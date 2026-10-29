@@ -26,14 +26,30 @@ export const listAutomationsTool = {
 export const getAutomationTool = {
   name: "get_automation",
   description:
-    "Fetch one automation: its status, trigger, steps, exit rules and how many people are in each " +
+    "Fetch one automation: its status, trigger, steps (each with the id and condition update_automation " +
+    "needs passed back), exit rules and how many people are in each " +
     "state. The same object list_automations returns, for a caller that already holds the id. People " +
-    "themselves are listed by list_automation_enrollments. An unknown automation_id answers 404 " +
+    "themselves are listed by list_automation_enrollments, and per-step opens and clicks by " +
+    "get_automation_metrics. An unknown automation_id answers 404 " +
     "not_found; a name or slug passed instead is answered with the matching id.",
   schema: {
     automation_id: z.string().describe("The automation's id from list_automations (a UUID), not its name or slug"),
   },
   handler: async (args: Record<string, unknown>) => request("GET", `/v1/automations/${args.automation_id}`),
+};
+
+export const getAutomationMetricsTool = {
+  name: "get_automation_metrics",
+  description:
+    "How each step of an automation is doing: per current step, its step_id, position, sent, delivered, " +
+    "opened and clicked. Opens and clicks are unique people, counted only after link scanners are ruled out, so " +
+    "they are lower than raw hit counts and reflect readers. Use it to see where a sequence loses people or which " +
+    "step to rewrite; list_automations has only enrolment counts. A step's figures follow it when an edit moves it. " +
+    "An unknown automation_id answers 404 not_found.",
+  schema: {
+    automation_id: z.string().describe("The automation's id from list_automations (a UUID), not its name or slug"),
+  },
+  handler: async (args: Record<string, unknown>) => request("GET", `/v1/automations/${args.automation_id}/metrics`),
 };
 
 export const setAutomationStatusTool = {
@@ -122,6 +138,59 @@ const DEFAULT_VARIABLES = z
       "already enrolled",
   );
 
+const CONDITION = z
+  .object({
+    type: z
+      .enum(["has_tag", "lacks_tag", "engaged", "not_engaged", "attribute_equals"])
+      .describe(
+        "has_tag / lacks_tag: the contact carries tag. engaged / not_engaged: the person opened or clicked " +
+          "anything this sequence has sent them so far, scanners excluded; not allowed on the first step. " +
+          "attribute_equals: the contact attribute key equals value, compared as text",
+      ),
+    tag: TAG.optional().describe("Required for has_tag and lacks_tag"),
+    key: z.string().regex(/^[a-zA-Z0-9_]+$/).max(100).optional().describe("Required for attribute_equals"),
+    value: z.union([z.string(), z.number(), z.boolean()]).optional().describe("Required for attribute_equals"),
+  })
+  .describe(
+    "One yes/no question asked when the step comes due. False skips the step (nothing sent) and the person moves " +
+      "on to the next one. The usual one: lacks_tag customer on an upgrade pitch",
+  );
+
+const STEPS = z
+  .array(
+    z.object({
+      id: z
+        .string()
+        .regex(/^[a-zA-Z0-9_-]{1,40}$/)
+        .optional()
+        .describe(
+          "The step's stable id. On create, optional (generated when left out). On update_automation, pass back " +
+            "the id get_automation returned for every step you keep, or the people on it lose their place; leave " +
+            "it out only for a new step. An id the automation does not have is refused",
+        ),
+      delay_minutes: z
+        .number()
+        .int()
+        .min(0)
+        .max(525600)
+        .describe(
+          "From enrolment for the first step, from the previous step for the rest. At most 525600 (one year)",
+        ),
+      subject: z.string().min(1).max(998),
+      html: z.string().optional().describe("Inline body; template_slug is the alternative. One of the two is required"),
+      template_slug: z
+        .string()
+        .min(1)
+        .optional()
+        .describe(
+          "A template from list_templates, rendered with the enrolment's variables. Must already exist",
+        ),
+      condition: CONDITION.nullable().optional(),
+    }),
+  )
+  .min(1)
+  .max(20);
+
 const exitRuleSchema = {
   topic_key: z
     .string()
@@ -183,41 +252,41 @@ export const createAutomationTool = {
     reply_to: REPLY_TO.optional(),
     trigger: z.object({
       kind: z
-        .enum(["api", "contact_added", "event", "tag_added"])
+        .enum(["api", "contact_added", "event", "tag_added", "date"])
         .describe(
           "api: enrol with enroll_in_automation. contact_added: starts when someone joins " +
             "audience_id. event: starts on emit_event with event_name. tag_added: starts when a " +
             "contact gains tag (tag_contact, or a contact added carrying it); a contact that " +
-            "already had the tag starts nothing, so turning it on does not mail everyone tagged",
+            "already had the tag starts nothing, so turning it on does not mail everyone tagged. " +
+            "date: starts for each contact in audience_id on the day (UTC) their date_attribute plus " +
+            "offset_days comes round, once per date; activating it never mails dates already passed " +
+            "or already inside the offset window, only those due from that day on",
         ),
-      audience_id: z.string().optional().describe("Required for contact_added; the audience's id, not its name"),
+      audience_id: z.string().optional().describe("Required for contact_added and date; the audience's id, not its name"),
       event_name: z.string().min(1).max(120).optional().describe("Required for event, e.g. trial_started. Up to 120 characters, matched exactly"),
       tag: z.string().min(1).max(60).optional().describe("Required for tag_added, e.g. audio-player. Normalised like contact tags"),
+      date_attribute: z
+        .string()
+        .regex(/^[a-zA-Z0-9_]+$/)
+        .max(100)
+        .optional()
+        .describe(
+          "Required for date: the contact attribute holding a YYYY-MM-DD date or ISO timestamp, e.g. " +
+            "renewal_date or birthday. Contacts whose value is in any other format are skipped",
+        ),
+      offset_days: z
+        .number()
+        .int()
+        .min(-365)
+        .max(365)
+        .optional()
+        .describe("For date: days from the date, negative for before (-7 is a week before a renewal). Defaults to 0"),
+      recurring_yearly: z
+        .boolean()
+        .optional()
+        .describe("For date: fire on every anniversary (birthdays, yearly renewals) rather than once. Defaults to false"),
     }),
-    steps: z
-      .array(
-        z.object({
-          delay_minutes: z
-            .number()
-            .int()
-            .min(0)
-            .max(525600)
-            .describe(
-              "From enrolment for the first step, from the previous step for the rest. At most 525600 (one year)",
-            ),
-          subject: z.string().min(1).max(998),
-          html: z.string().optional().describe("Inline body; template_slug is the alternative. One of the two is required"),
-          template_slug: z
-            .string()
-            .min(1)
-            .optional()
-            .describe(
-              "A template from list_templates, rendered with the enrolment's variables. Must already exist",
-            ),
-        }),
-      )
-      .min(1)
-      .max(20),
+    steps: STEPS,
     ...exitRuleSchema,
     reenrollment: REENROLLMENT.optional(),
     default_variables: DEFAULT_VARIABLES.optional(),
@@ -228,10 +297,14 @@ export const createAutomationTool = {
 export const updateAutomationTool = {
   name: "update_automation",
   description:
-    "Change the rules that take someone out of a sequence (topic_key, exit_tags, required_tags, " +
+    "Change a sequence's steps, the rules that take someone out of it (topic_key, exit_tags, required_tags, " +
     "exit_on_reply), its reply_to, its reenrollment, or its default_variables (replaces the whole " +
-    "set; {} clears it). Steps and the trigger are fixed once " +
-    "created. A reenrollment change applies from the next enrolment; nobody already enrolled is " +
+    "set; {} clears it). The trigger is fixed once created. steps replaces every step and is safe on " +
+    "a live automation only when each step you keep is passed back with the id get_automation returned: " +
+    "people on a step stay on it wherever it moves, a step without an id is new, and someone on a removed " +
+    "step continues from the next kept step after it (or completes). Read the automation first; an id it " +
+    "does not have is refused with 422 invalid_request naming the step, and nothing is changed. " +
+    "A reenrollment change applies from the next enrolment; nobody already enrolled is " +
     "touched. Fields left " +
     "out keep their value; a null topic_key or reply_to, or an empty tag list, clears it. People " +
     "already enrolled see the change from their next step, so a mistaken edit can be put back " +
@@ -246,6 +319,9 @@ export const updateAutomationTool = {
     reply_to: REPLY_TO.nullable().optional(),
     reenrollment: REENROLLMENT.optional(),
     default_variables: DEFAULT_VARIABLES.optional(),
+    steps: STEPS.optional().describe(
+      "Every step, in the new order. Pass back each kept step's id; leaving the field out keeps the steps unchanged",
+    ),
   },
   handler: async (args: Record<string, unknown>) => {
     const { automation_id, ...body } = args;
