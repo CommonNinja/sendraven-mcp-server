@@ -167,7 +167,9 @@ export const countSegmentTool = {
   name: "count_segment",
   description:
     "How many contacts a segment currently matches. A filter that matches nobody shows up " +
-    "here as 0, before any campaign is built around it or sent.",
+    "here as 0, before any campaign is built around it or sent. Engagement windows and date " +
+    "conditions (e.g. attributes.trial_ends_at within_next_days 3) are measured from the moment " +
+    "of the call, so the count of the same segment moves from day to day.",
   schema: { id: z.string() },
   handler: async (args: Record<string, unknown>) => request("GET", `/v1/segments/${args.id}/metrics`),
 };
