@@ -92,6 +92,7 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   // Campaigns
   list_broadcasts: read("List campaigns"),
   get_broadcast: read("Get campaign"),
+  get_broadcast_metrics: read("Get campaign metrics"),
   preview_broadcast: read("Preview campaign"),
   list_broadcast_recipients: read("List campaign recipients"),
   // Sends nothing, but the draft gets a public web version (web_version_url).

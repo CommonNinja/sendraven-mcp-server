@@ -225,6 +225,21 @@ export const getBroadcastTool = {
   handler: async (args: Record<string, unknown>) => request("GET", `/v1/broadcasts/${args.id}`),
 };
 
+export const getBroadcastMetricsTool = {
+  name: "get_broadcast_metrics",
+  description:
+    "How a campaign did: sent, delivered, bounced, complained, unique opens and clicks, and open_rate and " +
+    "click_rate over delivered (null until something is delivered). Opens and clicks count only people: a security " +
+    "gateway that followed every link, or a mailbox that loaded every image on arrival, is left out, and " +
+    "automated_opened and automated_clicked say how many recipients that removed. Report opened and clicked as the " +
+    "campaign's results; adding the automated figures back gives the inflated number other tools show, not more " +
+    "readers. Apple Mail's privacy prefetch cannot be told from a read and is in opened, so open_rate overstates and " +
+    "click_rate is the better signal. get_broadcast has progress and A/B results, not these totals. An unknown id " +
+    "answers 404 not_found.",
+  schema: { id: BROADCAST_ID },
+  handler: async (args: Record<string, unknown>) => request("GET", `/v1/broadcasts/${args.id}/metrics`),
+};
+
 export const pickBroadcastWinnerTool = {
   name: "pick_broadcast_winner",
   description:
