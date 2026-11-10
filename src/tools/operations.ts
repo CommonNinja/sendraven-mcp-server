@@ -4,12 +4,23 @@ import { request } from "../client";
 export const metricsTool = {
   name: "get_email_metrics",
   description:
-    "Delivery and engagement over a window. Open and click rates are over delivered, not " +
+    "Delivery and engagement over a window, for the whole workspace or narrowed to one " +
+    "campaign (broadcast_id) or one tag. Open and click rates are over delivered, not " +
     "sent — a low open rate with a high bounce rate is a deliverability problem, not an " +
-    "engagement one.",
-  schema: { days: z.number().int().min(1).max(365).optional().describe("Defaults to 30") },
-  handler: async (args: Record<string, unknown>) =>
-    request("GET", `/v1/emails/metrics?days=${args.days ?? 30}`),
+    "engagement one. Filtered, each day counts the messages sent that day and everything " +
+    "that later happened to them, so a campaign's opens stay on its send day; for one " +
+    "campaign's results by unique person, get_broadcast_metrics is the better call.",
+  schema: {
+    days: z.number().int().min(1).max(365).optional().describe("Defaults to 30"),
+    broadcast_id: z.string().optional().describe("Only this campaign's mail. An id from list_broadcasts"),
+    tag: z.string().optional().describe("Only messages carrying this tag, as name:value, e.g. category:win-back"),
+  },
+  handler: async (args: Record<string, unknown>) => {
+    const qs = new URLSearchParams({ days: String(args.days ?? 30) });
+    if (args.broadcast_id !== undefined) qs.set("broadcast_id", String(args.broadcast_id));
+    if (args.tag !== undefined) qs.set("tag", String(args.tag));
+    return request("GET", `/v1/emails/metrics?${qs}`);
+  },
 };
 
 export const listScheduledTool = {
