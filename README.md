@@ -20,7 +20,8 @@ claude mcp add --transport http sendraven https://mcp.sendraven.ai/mcp
 **Claude Code, as a plugin** (signs in with OAuth on first use):
 
 ```bash
-/plugin install sendraven --marketplace CommonNinja/sendraven-mcp-server
+/plugin marketplace add CommonNinja/sendraven-mcp-server
+/plugin install sendraven@sendraven
 ```
 
 **Gemini CLI**, as an extension (signs in with OAuth on first use):
