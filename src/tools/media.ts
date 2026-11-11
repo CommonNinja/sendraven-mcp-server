@@ -14,7 +14,9 @@ export const uploadMediaTool = {
     "and height describe the stored image and WebP comes back as PNG, JPEG or GIF. The same image uploaded again " +
     "returns the one already stored. 409 invalid_state means no sending domain has a live tracking record yet " +
     "(list_sending_domains shows the record to publish); 402 payment_method_required needs a person to add a " +
-    "card in the dashboard; 402 plan_limit_reached means the workspace holds its maximum (delete_media frees room).",
+    "card in the dashboard; 402 plan_limit_reached means the workspace holds its maximum (delete_media frees room). " +
+    "Call it rather than predicting the outcome: many workspaces need no card (get_usage shows " +
+    "payment_method.required false), so a missing card in get_usage is not a reason to skip the upload.",
   schema: {
     source_url: z
       .string()
