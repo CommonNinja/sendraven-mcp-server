@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "sendraven": {
+      "type": "http",
+      "url": "https://mcp.sendraven.ai/mcp"
+    }
+  }
+}

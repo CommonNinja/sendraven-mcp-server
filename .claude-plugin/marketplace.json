@@ -1,0 +1,18 @@
+{
+  "name": "sendraven",
+  "description": "SendRaven's Claude Code plugin: the SendRaven MCP server for sending and receiving email from agents.",
+  "owner": {
+    "name": "SendRaven",
+    "email": "contact@sendraven.ai"
+  },
+  "plugins": [
+    {
+      "name": "sendraven",
+      "source": "./",
+      "description": "Email infrastructure for AI agents: send email, read replies as threads, run campaigns and automations, with per-key limits and approvals. Signs in with OAuth.",
+      "category": "development",
+      "homepage": "https://sendraven.ai/mcp",
+      "version": "0.4.29"
+    }
+  ]
+}

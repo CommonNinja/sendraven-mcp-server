@@ -1,0 +1,22 @@
+{
+  "name": "sendraven",
+  "version": "0.4.29",
+  "description": "Email infrastructure for AI agents: send email, read replies as threads, run campaigns and automations, with per-key limits and approvals. Signs in with OAuth.",
+  "author": {
+    "name": "SendRaven",
+    "email": "contact@sendraven.ai",
+    "url": "https://sendraven.ai"
+  },
+  "homepage": "https://sendraven.ai/mcp",
+  "repository": "https://github.com/CommonNinja/sendraven-mcp-server",
+  "license": "MIT",
+  "keywords": [
+    "email",
+    "email-api",
+    "transactional-email",
+    "ai-agents",
+    "mcp"
+  ],
+  "icon": "logo.png",
+  "privacyPolicyUrl": "https://sendraven.ai/privacy"
+}
