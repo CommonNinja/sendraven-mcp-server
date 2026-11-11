@@ -1,6 +1,6 @@
 {
   "name": "sendraven",
-  "version": "0.4.30",
+  "version": "0.4.31",
   "description": "Email infrastructure for AI agents: send email, read replies as threads, run campaigns and automations, with per-key limits and approvals. Signs in with OAuth.",
   "author": {
     "name": "SendRaven",
