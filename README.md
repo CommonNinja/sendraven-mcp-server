@@ -17,6 +17,12 @@ key. It is priced per email sent, never per contact.
 claude mcp add --transport http sendraven https://mcp.sendraven.ai/mcp
 ```
 
+**Gemini CLI**, as an extension (signs in with OAuth on first use):
+
+```bash
+gemini extensions install https://github.com/CommonNinja/sendraven-mcp-server
+```
+
 **Cursor, Claude Desktop, and other clients with a JSON config:**
 
 ```json
