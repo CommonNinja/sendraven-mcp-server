@@ -32,6 +32,7 @@ import {
 } from "./broadcasts";
 import { getThreadTool, listThreadsTool, markThreadHandledTool, replyToMessageTool } from "./threads";
 import { listTemplatesTool, renderTemplateTool, sendTemplateTool } from "./templates";
+import { deleteMediaTool, listMediaTool, uploadMediaTool } from "./media";
 import { decideApprovalTool, listApprovalsTool } from "./approvals";
 import {
   createAutomationTool,
@@ -112,6 +113,9 @@ export const TOOLS: ToolDef[] = [
   listTemplatesTool,
   renderTemplateTool,
   sendTemplateTool,
+  listMediaTool,
+  uploadMediaTool,
+  deleteMediaTool,
   listApprovalsTool,
   decideApprovalTool,
   listAutomationsTool,

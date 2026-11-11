@@ -12,7 +12,7 @@
       "description": "Email infrastructure for AI agents: send email, read replies as threads, run campaigns and automations, with per-key limits and approvals. Signs in with OAuth.",
       "category": "development",
       "homepage": "https://sendraven.ai/mcp",
-      "version": "0.4.29"
+      "version": "0.4.30"
     }
   ]
 }

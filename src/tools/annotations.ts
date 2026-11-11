@@ -71,6 +71,14 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   render_template: read("Preview template"),
   send_template_email: send("Send template email"),
 
+  // Hosted images
+  list_media: read("List hosted images"),
+  // Stores nothing outside the workspace, but the image gets a public URL
+  // and source_url has our servers fetch an address the caller names.
+  upload_media: write("Upload image", { idempotentHint: true, openWorldHint: true }),
+  // Breaks the image in mail already delivered.
+  delete_media: destroy("Delete hosted image"),
+
   // Approvals
   list_pending_approvals: read("List pending approvals"),
   decide_approval: destroy("Approve or reject held email", { openWorldHint: true }),
