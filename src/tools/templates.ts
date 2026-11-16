@@ -56,3 +56,22 @@ export const sendTemplateTool = {
     return request("POST", "/v1/emails", body, idempotencyHeader(idempotency_key));
   },
 };
+
+export const saveTemplateTool = {
+  name: "save_template",
+  description:
+    "Create a stored template, or replace the one with this slug. For bringing templates over from " +
+    "another provider: replace its merge tags with {{variable}} names (Mailchimp's *|FNAME|*, Kit's " +
+    "{{ subscriber.first_name }} and the like become {{first_name}}), and remove its unsubscribe link " +
+    "and footer, because SendRaven adds both to every marketing send. Values are HTML-escaped when " +
+    "the template renders. An existing slug is overwritten, so list_templates first when the slug " +
+    "might be taken.",
+  schema: {
+    slug: z.string().regex(/^[a-z0-9-]+$/).describe("Lower-case letters, digits and hyphens; how sends refer to it"),
+    name: z.string().min(1).max(200),
+    subject: z.string().min(1).max(998).describe("May use {{variables}} too"),
+    html: z.string().min(1),
+    text: z.string().min(1).optional().describe("A plain-text body; left out, one is derived from the HTML"),
+  },
+  handler: async (args: Record<string, unknown>) => request("POST", "/v1/templates", args),
+};

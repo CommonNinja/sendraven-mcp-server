@@ -35,3 +35,38 @@ export const setPreferencesTool = {
   },
   handler: async (args: Record<string, unknown>) => request("POST", "/v1/topics/preferences", args),
 };
+
+export const saveTopicTool = {
+  name: "save_topic",
+  description:
+    "Create a subscription topic, or rename an existing one by its key: a kind of marketing mail " +
+    "people can opt out of on its own (product updates, promotions) while staying on the rest. " +
+    "Another provider's groups or interests that subscribers chose for themselves become topics; a " +
+    "label they never chose is a tag, not a topic. default_subscribed decides who gets the topic's " +
+    "mail before they choose, and changing it on an existing topic moves everyone who never chose.",
+  schema: {
+    key: z.string().regex(/^[a-z0-9-]+$/).describe("Lower-case letters, digits and hyphens, e.g. \"product-updates\""),
+    name: z.string().min(1).max(120),
+    description: z.string().max(300).optional().describe("Shown on the preference page"),
+    default_subscribed: z.boolean().optional().describe("Defaults to true when the topic is created"),
+  },
+  handler: async (args: Record<string, unknown>) => request("POST", "/v1/topics", args),
+};
+
+export const importTopicPreferencesTool = {
+  name: "import_topic_preferences",
+  description:
+    "Record many people's choice on one topic at once, for carrying over who was in or out of " +
+    "another provider's group or interest. subscribed false opts them out of this topic only; it " +
+    "never resubscribes someone who unsubscribed from everything. Up to 50,000 addresses per call.",
+  schema: {
+    key: z.string().describe("The topic's key from list_topics or save_topic"),
+    emails: z.array(z.string().email()).min(1).max(50_000),
+    subscribed: z.boolean(),
+  },
+  handler: async (args: Record<string, unknown>) =>
+    request("POST", `/v1/topics/${encodeURIComponent(String(args.key))}/import`, {
+      emails: args.emails,
+      subscribed: args.subscribed,
+    }),
+};

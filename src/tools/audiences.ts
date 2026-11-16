@@ -264,3 +264,48 @@ export const listTagsTool = {
   schema: {},
   handler: async () => request("GET", "/v1/contacts/tags"),
 };
+
+export const createAudienceTool = {
+  name: "create_audience",
+  description:
+    "Create a contact list and get back its id, for import_contacts and create_broadcast. The first " +
+    "step of a migration into a workspace that has no list yet. A name already in use answers 409 " +
+    "conflict: call list_audiences and use the existing one rather than making a second list of the " +
+    "same people.",
+  schema: {
+    name: z.string().min(1).max(120).describe("What the list is called, e.g. \"Newsletter\""),
+  },
+  handler: async (args: Record<string, unknown>) => request("POST", "/v1/audiences", { name: args.name }),
+};
+
+const SEGMENT_FILTER = z.object({
+  property: z.string().describe("A custom property key"),
+  operator: z.enum(["equals", "not_equals", "contains", "gt", "lt", "exists", "not_exists"]),
+  value: z.union([z.string(), z.number(), z.boolean()]).optional(),
+});
+
+export const createSegmentTool = {
+  name: "create_segment",
+  description:
+    "Save a segment: a named rule over one audience that a campaign can target by segment_id. " +
+    "Resolved when a campaign starts, never stored as a list, so it stays current. For a migration, " +
+    "the usual first segment is the people the old provider rated engaged, tagged on import: send " +
+    "the new domain's first campaign to them, then widen. engaged_within_days is strict (opened, " +
+    "clicked or active in your product inside the window); exclude_unengaged_days keeps anyone " +
+    "added or never mailed inside it, which on a fresh import is everyone. A key already in use " +
+    "answers 409 conflict.",
+  schema: {
+    audience_id: AUDIENCE_ID,
+    key: z.string().regex(/^[a-z0-9-]+$/).describe("Lower-case letters, digits and hyphens, e.g. \"engaged\""),
+    name: z.string().min(1).max(120),
+    tags: z.array(z.string().min(1)).max(20).optional().describe("Contacts must carry every one of these tags"),
+    exclude_tags: z.array(z.string().min(1)).max(20).optional().describe("Contacts carrying any of these are left out"),
+    opened_within_days: z.number().int().positive().max(3650).optional(),
+    clicked_within_days: z.number().int().positive().max(3650).optional(),
+    engaged_within_days: z.number().int().positive().max(3650).optional(),
+    exclude_unengaged_days: z.number().int().positive().max(3650).optional(),
+    topic_key: z.string().optional().describe("Only people not opted out of this topic"),
+    properties: z.array(SEGMENT_FILTER).max(20).optional().describe("Custom property conditions, all of which must hold"),
+  },
+  handler: async (args: Record<string, unknown>) => request("POST", "/v1/segments", args),
+};

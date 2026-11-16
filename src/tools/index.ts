@@ -31,7 +31,7 @@ import {
   sendBroadcastTool,
 } from "./broadcasts";
 import { getThreadTool, listThreadsTool, markThreadHandledTool, replyToMessageTool } from "./threads";
-import { listTemplatesTool, renderTemplateTool, sendTemplateTool } from "./templates";
+import { listTemplatesTool, renderTemplateTool, saveTemplateTool, sendTemplateTool } from "./templates";
 import { deleteMediaTool, listMediaTool, uploadMediaTool } from "./media";
 import { decideApprovalTool, listApprovalsTool } from "./approvals";
 import {
@@ -46,10 +46,18 @@ import {
   setAutomationStatusTool,
   updateAutomationTool,
 } from "./automations";
-import { getPreferencesTool, listTopicsTool, setPreferencesTool } from "./topics";
+import {
+  getPreferencesTool,
+  importTopicPreferencesTool,
+  listTopicsTool,
+  saveTopicTool,
+  setPreferencesTool,
+} from "./topics";
 import { createConversionGoalTool, getConversionMetricsTool, listConversionGoalsTool } from "./conversions";
 import {
   addContactTool,
+  createAudienceTool,
+  createSegmentTool,
   importContactsTool,
   countSegmentTool,
   deleteContactTool,
@@ -113,6 +121,7 @@ export const TOOLS: ToolDef[] = [
   listTemplatesTool,
   renderTemplateTool,
   sendTemplateTool,
+  saveTemplateTool,
   listMediaTool,
   uploadMediaTool,
   deleteMediaTool,
@@ -134,12 +143,16 @@ export const TOOLS: ToolDef[] = [
   listTopicsTool,
   getPreferencesTool,
   setPreferencesTool,
+  saveTopicTool,
+  importTopicPreferencesTool,
   listAudiencesTool,
+  createAudienceTool,
   addContactTool,
   importContactsTool,
   getContactTool,
   updateContactTool,
   listSegmentsTool,
+  createSegmentTool,
   listTagsTool,
   countSegmentTool,
   metricsTool,

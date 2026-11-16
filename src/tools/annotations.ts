@@ -68,6 +68,8 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
 
   // Templates
   list_templates: read("List templates"),
+  // Replaces the template with that slug: an overwrite.
+  save_template: destroy("Save template", { idempotentHint: true }),
   render_template: read("Preview template"),
   send_template_email: send("Send template email"),
 
@@ -126,12 +128,16 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   create_conversion_goal: write("Create conversion goal"),
   get_conversion_metrics: read("Get conversion metrics"),
   list_topics: read("List topics"),
+  // Renaming, or changing default_subscribed on, an existing topic overwrites it.
+  save_topic: destroy("Save topic", { idempotentHint: true }),
+  import_topic_preferences: write("Import topic preferences", { idempotentHint: true }),
   get_email_preferences: read("Get email preferences"),
   // Opting out of a topic ends that topic's automation enrolments.
   set_email_preferences: destroy("Set email preferences", { idempotentHint: true }),
 
   // Contacts and audiences
   list_audiences: read("List audiences"),
+  create_audience: write("Create audience"),
   // A new audience membership starts any contact_added sequence, which mails the contact.
   add_contact: write("Add contact", { openWorldHint: true }),
   // Overwrites existing contacts' fields and can start contact_added sequences.
@@ -144,6 +150,7 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   remove_from_audience: destroy("Remove contact from audience", { idempotentHint: true }),
   delete_contact: destroy("Delete contact", { idempotentHint: true }),
   list_segments: read("List segments"),
+  create_segment: write("Create segment"),
   count_segment: read("Count segment"),
   list_tags: read("List tags"),
 
