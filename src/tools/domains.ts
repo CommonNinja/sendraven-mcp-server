@@ -23,9 +23,13 @@ export const addDomainTool = {
     "is chosen per message, so a marketing complaint spike can never affect password reset " +
     "delivery. subdomains names the pair differently (tx. and promo.), still one domain. risk_class " +
     "provisions one identity on the domain exactly as given instead; it cannot be combined with " +
-    "subdomains. Two records come " +
-    "back marked optional: an inbound MX so replies land in threads, and a link. CNAME that " +
-    "turns on click tracking on the customer's own name once its certificate is issued. " +
+    "subdomains. Every record carries a tier, and only the required ones block sending: the dkim " +
+    "CNAME, one per sending subdomain, is all a domain needs to verify and send, so have the person " +
+    "publish those first rather than the whole list at once. recommended records (a bounce CNAME per " +
+    "subdomain, and one DMARC on the root domain, where an existing DMARC record already counts) " +
+    "improve alignment and can follow. optional ones are an inbound MX so replies land in threads, " +
+    "and a link. CNAME that turns on click tracking on the customer's own name once its certificate " +
+    "is issued. Domains added before this setup return three dkim CNAMEs instead of one, all required. " +
     "Adding a domain that already exists returns it rather than a duplicate. A public suffix " +
     "such as co.uk or github.io is not a domain anyone can send from and is refused with 422 " +
     "invalid_request; the domain registered under it, e.g. example.co.uk, is accepted. Passing " +
