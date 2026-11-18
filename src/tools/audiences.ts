@@ -300,6 +300,14 @@ export const createSegmentTool = {
     name: z.string().min(1).max(120),
     tags: z.array(z.string().min(1)).max(20).optional().describe("Contacts must carry every one of these tags"),
     exclude_tags: z.array(z.string().min(1)).max(20).optional().describe("Contacts carrying any of these are left out"),
+    exclude_audience_ids: z
+      .array(z.string().min(1))
+      .max(20)
+      .optional()
+      .describe(
+        "Audience ids (from list_audiences, never names) whose members are left out: everyone on " +
+          "audience_id who is not also on these lists. Not audience_id itself",
+      ),
     opened_within_days: z.number().int().positive().max(3650).optional(),
     clicked_within_days: z.number().int().positive().max(3650).optional(),
     engaged_within_days: z.number().int().positive().max(3650).optional(),

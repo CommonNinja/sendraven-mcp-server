@@ -140,6 +140,14 @@ export const createBroadcastTool = {
           .max(20)
           .optional()
           .describe("Leave out contacts carrying any of these tags, e.g. ['premium']"),
+        exclude_audience_ids: z
+          .array(z.string().min(1))
+          .max(20)
+          .optional()
+          .describe(
+            "Leave out anyone also on these audiences (ids from list_audiences), e.g. to promote a course " +
+              "to everyone on the newsletter who is not already on the course's customer list. Not audience_id itself",
+          ),
         date_conditions: z
           .array(
             z.object({
