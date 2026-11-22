@@ -295,6 +295,20 @@ export const resumeBroadcastTool = {
     request("POST", `/v1/broadcasts/${args.id}/resume`),
 };
 
+export const deleteBroadcastTool = {
+  name: "delete_broadcast",
+  description:
+    "Delete a campaign for good. Works in every status except sending: a draft (the usual case, " +
+    "such as a duplicate), a scheduled one (removed, not returned to draft), and a sent, failed, " +
+    "paused or testing one. Deleting a paused or testing campaign drops everyone still pending and " +
+    "it can never be resumed, so confirm with the person first. Emails already sent stay in the " +
+    "email log, but the campaign's results and recipient list are no longer reachable. A campaign " +
+    "that is sending answers 409 invalid_state; delete it once it has finished or paused. Answers " +
+    "{ id, deleted, recipients_discarded }.",
+  schema: { id: BROADCAST_ID },
+  handler: async (args: Record<string, unknown>) => request("DELETE", `/v1/broadcasts/${args.id}`),
+};
+
 export const sendBroadcastTool = {
   name: "send_broadcast",
   description:

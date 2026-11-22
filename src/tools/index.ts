@@ -22,6 +22,7 @@ import {
 } from "./suppressions";
 import {
   createBroadcastTool,
+  deleteBroadcastTool,
   getBroadcastMetricsTool,
   getBroadcastTool,
   listBroadcastsTool,
@@ -114,6 +115,7 @@ export const TOOLS: ToolDef[] = [
   sendBroadcastTool,
   pickBroadcastWinnerTool,
   resumeBroadcastTool,
+  deleteBroadcastTool,
   listThreadsTool,
   getThreadTool,
   replyToMessageTool,
