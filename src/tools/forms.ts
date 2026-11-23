@@ -24,6 +24,27 @@ const formSettings = {
   sender_name: z.string().max(80).optional().describe("Who the confirmation email says the list belongs to"),
   accent_color: z.string().optional().describe("#rrggbb button colour"),
   redirect_url: z.string().optional().describe("https page to go to after a signup"),
+  design: z
+    .object({
+      layout: z.enum(["card", "plain"]).optional().describe("card draws a bordered card; plain blends into the page"),
+      align: z.enum(["left", "center"]).optional(),
+      font: z.enum(["sans", "serif", "rounded", "mono"]).optional(),
+      corners: z.enum(["square", "rounded", "pill"]).optional(),
+      background_color: z
+        .string()
+        .optional()
+        .describe("#rrggbb: the card, or with layout plain the page behind the form. Text colour follows it"),
+    })
+    .optional()
+    .describe("How the form looks, to match the user's site. Only the keys passed change"),
+  logo_url: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "A public https URL of the user's logo (PNG, JPEG, GIF or WebP, under 2 MB). It is fetched once and a copy " +
+        "is kept, shown above the heading; null removes it. Read the logo off the user's own site, never invent one",
+    ),
 };
 
 export const listFormsTool = {
@@ -59,7 +80,7 @@ export const createFormTool = {
 export const updateFormTool = {
   name: "update_form",
   description:
-    "Change a signup form's wording, fields, tags or topics, or pause it (status paused stops it taking signups " +
+    "Change a signup form's wording, fields, tags, topics, logo or design, or pause it (status paused stops it taking signups " +
     "wherever it is embedded; active turns it back on). Only the fields passed change. The embed code stays the same.",
   schema: {
     id: z.string().describe("Form id from list_forms"),
