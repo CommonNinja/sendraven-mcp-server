@@ -107,7 +107,7 @@ start one only if its recipients fit what is left of the day. See
 ## Tools
 
 <!-- tools:start -->
-73 tools, generated from the server's registry.
+77 tools, generated from the server's registry.
 
 | Tool | What it does |
 | --- | --- |
@@ -163,6 +163,10 @@ start one only if its recipients fit what is left of the day. See
 | `set_email_preferences` | Set which topics a person receives, recording what they asked for — silently re-subscribing someone who opted out is what generates spam complaints. Every key must be an existing topic from list_topics: one unknown key refuses the whole call with 422 unknown_topic and nothing is saved. Setting a topic to false also ends any automation enrolment sent under that topic. |
 | `save_topic` | Create a subscription topic, or rename an existing one by its key: a kind of marketing mail people can opt out of on its own (product updates, promotions) while staying on the rest. Another provider's groups or interests that subscribers chose for themselves become topics; a label they never chose is a tag, not a topic. default_subscribed decides who gets the topic's mail before they choose, and changing it on an existing topic moves everyone who never chose. |
 | `import_topic_preferences` | Record many people's choice on one topic at once, for carrying over who was in or out of another provider's group or interest. subscribed false opts them out of this topic only; it never resubscribes someone who unsubscribed from everything. Up to 50,000 addresses per call. |
+| `list_forms` | List the workspace's signup forms, each with its embed_code. Use this before create_form to reuse a form rather than create a duplicate for the same list. |
+| `create_form` | Create a signup form that adds the people who fill it in to an audience, and get back embed_code to paste into the user's site (iframe_code for builders that strip scripts). With double opt-in (the default) people are added only after clicking a confirmation email, which is sent from the workspace's verified transactional domain and counts as one email each. audience_id must be an id from list_audiences, not the list's name; an attribute field must name an existing contact property. Refused for a key with guardrails. |
+| `update_form` | Change a signup form's wording, fields, tags or topics, or pause it (status paused stops it taking signups wherever it is embedded; active turns it back on). Only the fields passed change. The embed code stays the same. |
+| `list_form_submissions` | Who submitted a signup form and what happened: pending (confirmation sent, not clicked), subscribed, rejected (with the reason, such as payment_method_required when no card is on file, or suppressed) or expired. Use it to answer "why didn't my signup arrive?" and to read the consent record. |
 | `list_audiences` | List contact lists, newest first, with each one's id and contact_count. Paged: at most 100 per call; while has_more is true, more lists are on later pages, returned when next_cursor is passed back as cursor. |
 | `create_audience` | Create a contact list and get back its id, for import_contacts and create_broadcast. The first step of a migration into a workspace that has no list yet. A name already in use answers 409 conflict: call list_audiences and use the existing one rather than making a second list of the same people. |
 | `add_contact` | Add someone to an audience. A contact exists once per workspace and can be on any number of audiences, so adding an address that already exists joins them to this list rather than creating a second copy. status records that the person opted out elsewhere — it writes the suppression as well as the flag, and an add never resubscribes someone who opted out here. Someone new to the audience starts any automation triggered by joining it; re-adding an existing member starts nothing. A retry has the same result. import_contacts adds up to 5,000 people in one call. |

@@ -51,6 +51,12 @@ const destroy = (title: string, extra: Partial<ToolAnnotations> = {}): ToolAnnot
 const send = (title: string): ToolAnnotations => write(title, { openWorldHint: true });
 
 export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
+  // Signup forms
+  list_forms: read("List signup forms"),
+  create_form: write("Create signup form"),
+  update_form: write("Update signup form", { idempotentHint: true }),
+  list_form_submissions: read("List form submissions"),
+
   // Email
   send_email: send("Send email"),
   list_emails: read("List sent emails"),

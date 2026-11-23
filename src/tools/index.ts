@@ -54,6 +54,7 @@ import {
   saveTopicTool,
   setPreferencesTool,
 } from "./topics";
+import { createFormTool, listFormSubmissionsTool, listFormsTool, updateFormTool } from "./forms";
 import { createConversionGoalTool, getConversionMetricsTool, listConversionGoalsTool } from "./conversions";
 import {
   addContactTool,
@@ -147,6 +148,10 @@ export const TOOLS: ToolDef[] = [
   setPreferencesTool,
   saveTopicTool,
   importTopicPreferencesTool,
+  listFormsTool,
+  createFormTool,
+  updateFormTool,
+  listFormSubmissionsTool,
   listAudiencesTool,
   createAudienceTool,
   addContactTool,
