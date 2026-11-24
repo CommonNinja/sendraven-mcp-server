@@ -32,6 +32,19 @@ export const TAGS = z
       "this mail and its conversation again; a conversation carries the tags of every message sent on it",
   );
 
+/**
+ * Open and click tracking on a send, shared by every tool that sends one.
+ */
+export const TRACK = z
+  .boolean()
+  .optional()
+  .describe(
+    "Open and click tracking, on by default (when the domain's tracking hostname is live). A text-only " +
+      "message is given a plain HTML part so opens and clicks can be recorded; the text goes out as " +
+      "written. Pass false only when the recipient must get untracked mail: no pixel, no rewritten " +
+      "links, text stays text-only, and opened_at/clicked_at stay null, so 'not opened' means nothing",
+  );
+
 export const TAG_FILTER = z
   .string()
   .optional()
@@ -100,9 +113,10 @@ export const sendEmailTool = {
       ),
     subject: z.string(),
     html: z.string().optional().describe("HTML body; provide html, text, or both"),
-    text: z.string().optional(),
+    text: z.string().optional().describe("Plain-text body. Sent as written; an HTML part is added for tracking unless track is false"),
     scheduled_at: z.string().optional().describe("'in 3 days' or an ISO 8601 timestamp"),
     tags: TAGS,
+    track: TRACK,
     idempotency_key: IDEMPOTENCY_KEY,
   },
   handler: async (args: Record<string, unknown>) => {

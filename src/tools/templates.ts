@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { idempotencyHeader, request } from "../client";
-import { IDEMPOTENCY_KEY, SEND_ERRORS } from "./emails";
+import { IDEMPOTENCY_KEY, SEND_ERRORS, TRACK } from "./emails";
 
 export const listTemplatesTool = {
   name: "list_templates",
@@ -49,6 +49,7 @@ export const sendTemplateTool = {
       .describe("Where replies go instead of from; outside SendRaven's domains they never reach a thread"),
     subject: z.string().optional().describe("Overrides the template's subject"),
     scheduled_at: z.string().optional(),
+    track: TRACK,
     idempotency_key: IDEMPOTENCY_KEY,
   },
   handler: async (args: Record<string, unknown>) => {

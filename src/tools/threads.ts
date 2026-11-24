@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { idempotencyHeader, request } from "../client";
-import { IDEMPOTENCY_KEY, TAG_FILTER, TAGS } from "./emails";
+import { IDEMPOTENCY_KEY, TAG_FILTER, TAGS, TRACK } from "./emails";
 
 export const listThreadsTool = {
   name: "list_threads",
@@ -76,6 +76,7 @@ export const replyToMessageTool = {
           "is how a follow-up is withdrawn when the person answers first",
       ),
     tags: TAGS,
+    track: TRACK,
     idempotency_key: IDEMPOTENCY_KEY,
   },
   handler: async (args: Record<string, unknown>) => {
