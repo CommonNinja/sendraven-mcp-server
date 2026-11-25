@@ -5,7 +5,7 @@ export const listSuppressionsTool = {
   name: "list_suppressions",
   description:
     "List addresses we refuse to mail and why (hard_bounce, complaint, unsubscribe, manual, " +
-    "list_hygiene), newest first, each with its scope. When someone reports not receiving " +
+    "list_hygiene, soft_bounce), newest first, each with its scope. When someone reports not receiving " +
     "email, this shows whether the address is suppressed. email returns one address's suppressions directly; scanning pages " +
     "instead is how the wrong suppression gets cleared. At most 100 per call; while has_more is " +
     "true, next_cursor passed back as cursor returns the next page.",
