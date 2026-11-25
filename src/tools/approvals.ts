@@ -7,7 +7,9 @@ export const listApprovalsTool = {
     "List messages held for human approval, with their full content. A key configured to " +
     "require approval drafts rather than sends; a person releases it. A send that returned " +
     "status 'pending_approval' is waiting here, and retrying the send does not release it. Oldest first, each " +
-    "with its expires_at; an expired approval drops out of the list and can no longer be decided.",
+    "with its expires_at; an expired approval drops out of the list and can no longer be decided. " +
+    "A decided draft leaves the list: get_thread then shows it sent (with original_text when a person " +
+    "edited it) or canceled, and an endpoint subscribed to the approval webhook event hears it at once.",
   schema: {},
   handler: async () => request("GET", "/v1/approvals"),
 };
